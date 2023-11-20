@@ -1,0 +1,42 @@
+[core]
+	# Line endings
+	autocrlf = false
+	
+	# Use custom `.gitignore` and `.gitattributes`
+	excludesfile = ~/.gitignore
+	attributesfile = ~/.gitattributes
+
+	# Default editor for .git files
+	editor = vim
+
+[alias]
+	# Lists
+	tags = tag -l
+	branches = branch -a
+	remotes = remote -v 
+
+	# Amending
+	amend = commid --amend --no-edit
+	rename = "!f() {commit --amend -m $1}
+
+[help]
+	# Correct and execute mistyped commands
+	autocorrect = 1
+
+[init]
+	defaultBranch = main
+
+[user]
+	name = Benjamin Rae
+	email = benjaminrae93@gmail.com
+
+[pull]
+	ff = only
+
+[fetch]
+	prune = true
+
+[color]
+	ui = auto
+
+
