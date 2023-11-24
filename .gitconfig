@@ -17,7 +17,7 @@
 
 	# Amending
 	amend = commid --amend --no-edit
-	rename = "!f() {commit --amend -m $1}
+	rename = "!f() {commit --amend -m $1}"
 
 [help]
 	# Correct and execute mistyped commands
