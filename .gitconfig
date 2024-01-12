@@ -11,6 +11,7 @@
 
 [alias]
 	# Lists
+	aliases = config --get-regexp alias
 	tags = tag -l
 	branches = branch -a
 	remotes = remote -v 
