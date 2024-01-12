@@ -16,7 +16,7 @@
 	remotes = remote -v 
 
 	# Amending
-	amend = commid --amend --no-edit
+	amend = commit --amend --no-edit
 	rename = "!f() {commit --amend -m $1}"
 
 [help]
