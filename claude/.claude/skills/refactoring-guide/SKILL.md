@@ -55,6 +55,15 @@ Why: Avoids premature abstraction. Two occurrences might be coincidence. Three c
 - **How**: Extract to a method or use early returns
 - **Why**: Makes logic easier to follow
 
+## Choosing a Pattern
+
+| Symptom | Pattern |
+|---------|---------|
+| Long method, hard to follow | Extract Method |
+| Name doesn't convey intent | Rename |
+| Complex boolean or arithmetic expression | Extract Variable |
+| Nested if/else, multiple conditions | Simplify Conditional |
+
 ## Code Clarity Principles
 
 **Prefer improving naming over adding comments.** Good code is self-documenting.
