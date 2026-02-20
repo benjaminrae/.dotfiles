@@ -38,6 +38,7 @@ Options (all optional, none selected by default):
 - **Cognitive load analysis** — Runs the `cognitive-load-analyzer` agent to calculate a Cognitive Load Index (0-1000) across 8 dimensions.
 - **Test design review** — Runs the `test-design-reviewer` agent to evaluate test quality using Dave Farley's 8 Properties. Produces a Farley Index (0-10).
 - **System walkthrough** — Runs the `system-walkthrough` agent to generate a narrative architecture deck.
+- **PostgreSQL conventions review** — Checks SQL files, migrations, and database-related code against PostgreSQL naming conventions, query anti-patterns, and schema design standards. Uses the `postgresql-guidelines` skill conventions reference.
 
 If no options are selected, proceed with the base review only. Record which options were selected for use in Steps 5 and 7.
 
@@ -136,6 +137,15 @@ If **Cognitive load analysis** was selected, launch the `cognitive-load-analyzer
 If **Test design review** was selected, launch the `test-design-reviewer` agent via the Task tool with `subagent_type: "test-design-reviewer"`. Prompt it to evaluate all test files changed or added on the branch.
 
 If **System walkthrough** was selected, launch the `system-walkthrough` agent via the Task tool with `subagent_type: "system-walkthrough"`. Prompt it to generate an overview of the system.
+
+If **PostgreSQL conventions review** was selected, launch a `code-reviewer` agent via the Task tool with `subagent_type: "code-reviewer"`. Prompt it to:
+- Read all changed `.sql` files, migration files, and application code containing SQL queries (use `git diff main...HEAD`)
+- Read the PostgreSQL conventions reference at `~/.claude/skills/postgresql-guidelines/conventions-reference.md`
+- Check all naming conventions (tables, columns, PKs, FKs, indexes, constraints, functions)
+- Flag query anti-patterns: `COUNT(*)` instead of `EXISTS`, subqueries instead of CTEs, loops in SQL, missing indexes
+- Flag schema issues: PostgreSQL ENUM types, DELETE ON CASCADE, UPSERT outside migrations
+- Flag SQL style violations: lowercase keywords, trailing commas, missing semicolons
+- Report each violation with file path, line number, rule violated, and the correct pattern
 
 ### Step 6: Parse coverage and mutation reports
 
@@ -258,6 +268,14 @@ Write the report to `reviews/<branch-name>.md` with this structure:
 
 ### Verdict: GENERATED / NOT SELECTED
 
+## 11. PostgreSQL Conventions
+
+<If not selected, state: "Not selected for this review.">
+<If selected: naming violations, query anti-patterns, schema design issues, SQL style violations>
+<Table of violations: file | line | rule | fix>
+
+### Verdict: PASS / FAIL / NOT SELECTED
+
 ## Action Items
 
 <Numbered list of all issues that need to be fixed, ordered by severity>
@@ -272,6 +290,7 @@ Write the report to `reviews/<branch-name>.md` with this structure:
 | Running agents before automated checks | Run automated checks (Step 4) first — agents need coverage data |
 | Not reading ALL changed files | Use `git diff main...HEAD` to get the full diff, not just latest commit |
 | Hardcoding tool commands | Use discovered commands from Step 3, not assumed defaults |
+| Running PostgreSQL review on non-database branches | Only select when the branch touches SQL files or migrations |
 
 ### Step 8: Present results
 
