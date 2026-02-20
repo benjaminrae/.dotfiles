@@ -27,7 +27,21 @@ git diff --name-only main...HEAD
 
 Use the branch name (sanitised for filesystem — replace `/` with `-` and remove special characters) as the review filename: `reviews/<branch-name>.md`.
 
-### Step 2: Discover repo tooling
+### Step 2: Select optional deep analysis
+
+Before running the review, prompt the user with a multi-select question using AskUserQuestion:
+
+> "Which additional analysis steps do you want to include alongside the base review?"
+
+Options (all optional, none selected by default):
+- **Code smell detection** — Runs the `code-smell-detector` agent to identify 50+ code smells across 10 categories. Produces `code-smell-detector-report.md` and `code-smell-detector-summary.md`.
+- **Cognitive load analysis** — Runs the `cognitive-load-analyzer` agent to calculate a Cognitive Load Index (0-1000) across 8 dimensions.
+- **Test design review** — Runs the `test-design-reviewer` agent to evaluate test quality using Dave Farley's 8 Properties. Produces a Farley Index (0-10).
+- **System walkthrough** — Runs the `system-walkthrough` agent to generate a narrative architecture deck.
+
+If no options are selected, proceed with the base review only. Record which options were selected for use in Steps 5 and 7.
+
+### Step 3: Discover repo tooling
 
 Inspect the following files to build a tooling map. Read whichever exist in the repo root:
 
@@ -55,7 +69,7 @@ Build a tooling map with these categories:
 
 If a category has no discoverable tool, mark it as "Not available" and skip running it. Do not fail — note it in the report.
 
-### Step 3: Run automated checks in parallel
+### Step 4: Run automated checks in parallel
 
 Using the discovered tooling, run the following concurrently and capture all output:
 
@@ -71,7 +85,7 @@ Run the discovered linting and static analysis commands. Report any issues found
 **3d. Mutation testing**
 Run the discovered mutation testing command (if available). If not available, skip this step entirely and mark the section as NOT AVAILABLE in the report. Do not fail the review because mutation testing is absent.
 
-### Step 4: Launch parallel review agents
+### Step 5: Launch parallel review agents
 
 Launch these three agents concurrently using the Task tool:
 
@@ -111,7 +125,19 @@ Prompt the agent to:
 - Check refactoring patterns are applied correctly (no premature abstraction, three strikes rule observed)
 - Report any violations with file paths and line numbers
 
-### Step 5: Parse coverage and mutation reports
+**Optional agents (based on Step 2 selection):**
+
+Launch any selected optional agents in parallel alongside the base agents:
+
+If **Code smell detection** was selected, launch the `code-smell-detector` agent via the Task tool with `subagent_type: "code-smell-detector"`. Prompt it to analyze all changed files on the branch. It will produce `code-smell-detector-report.md` and `code-smell-detector-summary.md`.
+
+If **Cognitive load analysis** was selected, launch the `cognitive-load-analyzer` agent via the Task tool with `subagent_type: "cognitive-load-analyzer"`. Prompt it to analyze the codebase focusing on changed files.
+
+If **Test design review** was selected, launch the `test-design-reviewer` agent via the Task tool with `subagent_type: "test-design-reviewer"`. Prompt it to evaluate all test files changed or added on the branch.
+
+If **System walkthrough** was selected, launch the `system-walkthrough` agent via the Task tool with `subagent_type: "system-walkthrough"`. Prompt it to generate an overview of the system.
+
+### Step 6: Parse coverage and mutation reports
 
 After the automated checks complete:
 
@@ -132,7 +158,7 @@ Flag any file with coverage below 90%.
 
 Flag any file with mutation score below 90%. List all surviving mutants as they indicate specific gaps in test quality that line/branch coverage alone cannot detect.
 
-### Step 6: Compile review report
+### Step 7: Compile review report
 
 Write the report to `reviews/<branch-name>.md` with this structure:
 
@@ -203,12 +229,41 @@ Write the report to `reviews/<branch-name>.md` with this structure:
 
 ### Verdict: PASS / FAIL
 
+## 7. Code Smell Detection
+
+<If not selected, state: "Not selected for this review.">
+<If selected: findings from code-smell-detector agent>
+<Link to code-smell-detector-report.md for full details>
+
+### Verdict: PASS / FAIL / NOT SELECTED
+
+## 8. Cognitive Load Analysis
+
+<If not selected, state: "Not selected for this review.">
+<If selected: Cognitive Load Index score and per-dimension breakdown>
+
+### Verdict: PASS / FAIL / NOT SELECTED
+
+## 9. Test Design Quality
+
+<If not selected, state: "Not selected for this review.">
+<If selected: Farley Index score and per-property breakdown>
+
+### Verdict: PASS / FAIL / NOT SELECTED
+
+## 10. System Walkthrough
+
+<If not selected, state: "Not selected for this review.">
+<If selected: link to generated walkthrough deck>
+
+### Verdict: GENERATED / NOT SELECTED
+
 ## Action Items
 
 <Numbered list of all issues that need to be fixed, ordered by severity>
 ```
 
-### Step 7: Present results
+### Step 8: Present results
 
 After writing the report file, print a summary to the user showing:
 
