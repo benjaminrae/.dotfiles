@@ -1,117 +1,142 @@
-Branch Review
-Perform a comprehensive multi-agent code review and architecture review of all changes in the current branch compared to main. Output the results to /reviews/<branch-name>.md.
+---
+name: branch-review
+description: Perform a comprehensive multi-agent code review of all changes in the current branch compared to main. Discovers repo tooling automatically and outputs results to reviews/<branch-name>.md.
+---
 
-Overview
+## Overview
+
 This skill launches multiple specialised review agents in parallel and then compiles a single review report. The review covers:
 
-Clean Architecture compliance — dependency direction, no infrastructure leakage into application/domain
-Test quality — deterministic, extensive, all happy and unhappy paths, correct response codes and bodies, no leaked internals
-Test coverage — must be above 90%
-Mutation testing — mutation score must be above 90% for changed classes
-Static analysis (Sonar) — no issues
-Formatting — no Spotless violations
-CLAUDE.md standards — TDD, test doubles, naming, refactoring rules, TypeScript/Java conventions
-Steps
-1. Identify the branch and changed files
-   BRANCH=$(git rev-parse --abbrev-ref HEAD)
-   echo "Branch: $BRANCH"
-   git diff --name-only main...HEAD
-   Use the branch name (sanitised for filesystem) as the review filename.
+- Architecture compliance — check against any stated architecture, or apply general clean architecture principles
+- Test quality — deterministic, extensive, all happy and unhappy paths, behaviour-driven
+- Test coverage — must be above 90%
+- Mutation testing — mutation score must be above 90% for changed files (if available)
+- Static analysis / linting — no issues
+- Formatting — no violations
+- CLAUDE.md standards — TDD, test doubles, naming, refactoring rules, language conventions
 
-2. Run automated checks in parallel
-   Run these commands concurrently and capture their output:
+## Steps
 
-2a. Run tests and generate coverage report
-./gradlew :core:test :core:jacocoTestReport
-After the tests pass, read the JaCoCo XML report at core/build/reports/jacoco/test/jacocoTestReport.xml and extract overall line/branch coverage percentages. Flag if coverage is below 90%.
+### Step 1: Identify branch and changed files
 
-2b. Run Spotless formatting check
-./gradlew spotlessCheck
-Report any formatting violations found.
+```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "Branch: $BRANCH"
+git diff --name-only main...HEAD
+```
 
-2c. Run Sonar analysis (local)
-./gradlew sonar
-If Sonar is not available locally (requires token/server), skip this step and note it in the report. Alternatively, check for common Sonar-detectable issues manually: unused imports, empty catch blocks, code duplication, cognitive complexity.
+Use the branch name (sanitised for filesystem — replace `/` with `-` and remove special characters) as the review filename: `reviews/<branch-name>.md`.
 
-2d. Run mutation testing on changed classes
-Run PIT mutation testing against only the classes changed on the branch:
+### Step 2: Discover repo tooling
 
-make mutation-test-changed
-This uses the Makefile target that:
+Inspect the following files to build a tooling map. Read whichever exist in the repo root:
 
-Computes the list of changed production Java classes vs develop
-Passes them to ./gradlew :core:pitest -PpitTargetClasses="<classes>"
-Excludes Configuration and CoreApplication classes automatically
-After the command completes, read the PIT XML report at core/build/reports/pitest/mutations.xml and the HTML summary at core/build/reports/pitest/index.html. Extract:
+| File | What to look for |
+|------|-----------------|
+| `CLAUDE.md` | Project-specific test, lint, build, coverage commands |
+| `package.json` | `scripts` section: `test`, `lint`, `format`, `coverage`, `typecheck` |
+| `Makefile` | Targets for `test`, `lint`, `format`, `coverage`, `mutation` |
+| `build.gradle` / `build.gradle.kts` | Tasks: `test`, `jacocoTestReport`, `spotlessCheck`, `sonar`, `pitest` |
+| `pom.xml` | Maven goals: `test`, `verify`, `spotbugs`, `checkstyle` |
+| `Cargo.toml` | `cargo test`, `cargo clippy`, `cargo fmt` |
+| `pyproject.toml` / `setup.cfg` | `pytest`, `ruff`, `black`, `mypy` |
+| `README.md` / `CONTRIBUTING.md` | Documented development commands |
 
-Overall mutation score (killed / total mutations)
-Per-class mutation scores for changed files
-List of surviving mutants (mutations that were NOT killed by tests)
-Flag if the overall mutation score is below 90%.
+Build a tooling map with these categories:
 
-If make mutation-test-changed fails (e.g. pitest plugin not configured on this branch), note it in the report and skip this step.
+| Category | Discovered command | Available? |
+|----------|--------------------|------------|
+| Tests | e.g. `npm test`, `./gradlew test`, `cargo test` | Yes / No |
+| Coverage | e.g. `npm run coverage`, `./gradlew jacocoTestReport` | Yes / No |
+| Linting | e.g. `npm run lint`, `cargo clippy`, `ruff check .` | Yes / No |
+| Formatting | e.g. `npm run format`, `cargo fmt --check`, `black --check .` | Yes / No |
+| Static Analysis | e.g. `npx tsc --noEmit`, `mypy`, `spotbugs` | Yes / No |
+| Mutation Testing | e.g. `npm run mutation`, `make mutation-test`, `./gradlew pitest` | Yes / No |
 
-3. Launch parallel review agents
-   Launch these agents concurrently using the Task tool:
+If a category has no discoverable tool, mark it as "Not available" and skip running it. Do not fail — note it in the report.
 
-Agent 1: Architecture Review (code-reviewer)
+### Step 3: Run automated checks in parallel
+
+Using the discovered tooling, run the following concurrently and capture all output:
+
+**3a. Tests + coverage**
+Run the discovered test command followed by the coverage command (if available). After they complete, read the generated coverage report (format depends on tooling: LCOV, Istanbul JSON, JaCoCo XML, coverage.py XML, etc.) and extract overall line/branch coverage percentages. Flag any value below 90%.
+
+**3b. Formatting check**
+Run the discovered formatting check command. Report any violations found. If not available, skip and note it.
+
+**3c. Static analysis / linting**
+Run the discovered linting and static analysis commands. Report any issues found. If not available, skip and note it.
+
+**3d. Mutation testing**
+Run the discovered mutation testing command (if available). If not available, skip this step entirely and mark the section as NOT AVAILABLE in the report. Do not fail the review because mutation testing is absent.
+
+### Step 4: Launch parallel review agents
+
+Launch these three agents concurrently using the Task tool:
+
+**Agent 1: Architecture Review (code-reviewer)**
+
 Prompt the agent to:
+- Read ALL changed files on the branch (production + test code) using `git diff main...HEAD`
+- Check against any architecture documented in `CLAUDE.md`, `README.md`, or `ARCHITECTURE.md` if present; otherwise apply general clean architecture principles (separation of concerns, dependency inversion, single responsibility)
+- Check that domain/core logic contains no infrastructure or framework-specific dependencies
+- Check that interfaces/ports are defined at the appropriate boundary layer
+- Check for proper separation of concerns across layers
+- Report any violations with file paths and line numbers
 
-Read ALL changed files on the branch (production + test code)
-Verify clean architecture layers: domain → application → adapters/infrastructure
-Check dependency direction: domain must NOT depend on application, infrastructure, or adapters. Application must NOT depend on infrastructure or adapters
-Check that domain and application layers contain NO infrastructure terminology (no HTTP status codes, no JPA annotations, no Spring annotations, no REST concepts, no JSON references)
-Check that ports (interfaces) are defined in the application layer, implementations in infrastructure
-Check for proper separation: controllers in adapters, use cases in application, entities/value objects in domain
-Report any violations with file paths and line numbers
-Agent 2: Test Quality Review (code-reviewer)
+**Agent 2: Test Quality Review (code-reviewer)**
+
 Prompt the agent to:
+- Read ALL test files that were changed or added on the branch
+- Check tests are deterministic (no random data, no time-dependent assertions, no ordering assumptions)
+- Check ALL happy paths are covered
+- Check ALL unhappy/error paths are covered (validation errors, not found, conflicts, etc.)
+- Check response codes and bodies are correct and semantically appropriate (where applicable)
+- Check that test doubles follow CLAUDE.md guidelines (manual test doubles preferred over framework mocks)
+- Check tests follow behaviour-driven testing, not implementation-driven testing
+- Check test naming follows conventions
+- Report any missing test scenarios and any issues found
 
-Read ALL test files that were changed or added on the branch
-Check tests are deterministic (no random data, no time-dependent assertions, no ordering assumptions)
-Check ALL happy paths are covered at acceptance level
-Check ALL unhappy/error paths are covered (validation errors, not found, conflicts, etc.)
-Check HTTP response codes are correct and semantically appropriate (201 for creation, 404 for not found, etc.)
-Check response bodies are correct and do NOT expose internal implementation details (no stack traces, no internal IDs that shouldn't be public, no infrastructure-specific fields)
-Check that test doubles follow CLAUDE.md guidelines (manual test doubles preferred over framework mocks)
-Check tests follow behaviour-driven testing, not implementation-driven
-Check test naming follows conventions
-Report any missing test scenarios and any issues found
-Agent 3: CLAUDE.md Standards Review (code-reviewer)
+**Agent 3: CLAUDE.md Standards Review (code-reviewer)**
+
 Prompt the agent to:
+- Read ALL changed files (production + test)
+- Read the project's `CLAUDE.md` for standards
+- Check that code follows TDD principles (test files should exist for all new production code)
+- Check naming conventions (descriptive names, self-documenting without comments)
+- Check method/function visibility (prefer lowest necessary visibility)
+- Check for proper use of interfaces for behaviour and types/structs for data
+- Check there is no over-engineering or unnecessary complexity
+- Check refactoring patterns are applied correctly (no premature abstraction, three strikes rule observed)
+- Report any violations with file paths and line numbers
 
-Read ALL changed files (production + test)
-Read the CLAUDE.md file for the project standards
-Check that code follows TDD principles (test files should exist for all new production code)
-Check naming conventions (descriptive names, no comments needed to explain code)
-Check method visibility (prefer lowest visibility: private > protected > public)
-Check for proper use of interfaces for behaviour and types for data structures
-Check no any type usage (if TypeScript)
-Check code is self-documenting without comments
-Check refactoring patterns are applied correctly (no premature abstraction, three strikes rule)
-Check for over-engineering or unnecessary complexity
-Report any violations with file paths and line numbers
-4. Read the JaCoCo coverage report
-   After tests complete, parse the JaCoCo XML report to extract:
+### Step 5: Parse coverage and mutation reports
 
-Overall line coverage percentage
-Overall branch coverage percentage
-Per-class coverage for changed files
-Flag any class with coverage below 90%
-5. Read the PIT mutation testing report
-   After mutation tests complete, parse the PIT XML report at core/build/reports/pitest/mutations.xml to extract:
+After the automated checks complete:
 
-Total number of mutations generated
-Number of mutations killed (detected by tests)
-Number of mutations that survived (NOT detected — these indicate weak tests)
-Overall mutation score percentage (killed / total)
-Per-class mutation scores for changed files
-For each surviving mutant: the file, line number, mutator type, and description
-Flag any class with mutation score below 90%. List all surviving mutants as they indicate specific gaps in test coverage that line/branch coverage alone cannot detect.
+**Coverage:** Extract from whichever report format the tooling produced:
+- Overall line coverage percentage
+- Overall branch coverage percentage (if available)
+- Per-file coverage for changed files
 
-6. Compile the review report
-   Write the report to /reviews/<branch-name>.md with this structure:
+Flag any file with coverage below 90%.
 
+**Mutation testing (if available):** Extract from the mutation report:
+- Total mutations generated
+- Mutations killed (detected by tests)
+- Mutations that survived (NOT detected — indicate weak tests)
+- Overall mutation score (killed / total)
+- Per-file mutation scores for changed files
+- For each surviving mutant: the file, line number, mutator type, and description
+
+Flag any file with mutation score below 90%. List all surviving mutants as they indicate specific gaps in test quality that line/branch coverage alone cannot detect.
+
+### Step 6: Compile review report
+
+Write the report to `reviews/<branch-name>.md` with this structure:
+
+```markdown
 # Branch Review: <branch-name>
 
 **Date:** <current date>
@@ -123,7 +148,7 @@ Flag any class with mutation score below 90%. List all surviving mutants as they
 <Overall assessment: PASS / PASS WITH WARNINGS / FAIL>
 <Brief summary of findings>
 
-## 1. Clean Architecture Compliance
+## 1. Architecture Compliance
 
 <Findings from Architecture Review agent>
 <Table of violations if any>
@@ -136,42 +161,41 @@ Flag any class with mutation score below 90%. List all surviving mutants as they
 
 ### Coverage
 - Line coverage: X%
-- Branch coverage: X%
-- Per-class coverage for changed files (table)
+- Branch coverage: X% (if available)
+- Per-file coverage for changed files (table)
 
 ### Missing test scenarios
 <List any missing scenarios>
-
-### Response codes and bodies
-<Assessment of response code correctness>
 
 ### Verdict: PASS / FAIL
 
 ## 3. Mutation Testing
 
+<If not available, state: "Mutation testing tooling not detected in this repository.">
+
 - Mutation score: X% (Y killed / Z total)
 - Threshold: 90%
 
-### Per-class mutation scores
-<Table of class | mutations | killed | survived | score>
+### Per-file mutation scores
+<Table of file | mutations | killed | survived | score>
 
 ### Surviving mutants
 <Table of file | line | mutator | description for each surviving mutant>
 <Brief analysis of what each surviving mutant means for test quality>
 
-### Verdict: PASS / FAIL
+### Verdict: PASS / FAIL / NOT AVAILABLE
 
 ## 4. Formatting
 
-<Spotless check results>
+<Formatting check results, or "Not available" if no tool discovered>
 
-### Verdict: PASS / FAIL
+### Verdict: PASS / FAIL / NOT AVAILABLE
 
 ## 5. Static Analysis
 
-<Sonar results or manual checks>
+<Linting and static analysis results, or "Not available" if no tool discovered>
 
-### Verdict: PASS / FAIL
+### Verdict: PASS / FAIL / NOT AVAILABLE
 
 ## 6. CLAUDE.md Standards Compliance
 
@@ -182,9 +206,12 @@ Flag any class with mutation score below 90%. List all surviving mutants as they
 ## Action Items
 
 <Numbered list of all issues that need to be fixed, ordered by severity>
-7. Present the results
-   After writing the report file, print a summary to the user showing:
+```
 
-The overall verdict
-The path to the full report
-The number of action items (if any)
+### Step 7: Present results
+
+After writing the report file, print a summary to the user showing:
+
+- The overall verdict (PASS / PASS WITH WARNINGS / FAIL)
+- The path to the full report
+- The number of action items (if any)
