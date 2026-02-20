@@ -1,21 +1,11 @@
 ---
-name: create-jira-task-v2
+name: jira
 description: Use when creating Jira issues with full context - auto-detects project from repo, validates issue types, prompts for parent/epic, enriches description from git and conversation, previews before creation
 ---
 
-# Create Jira Task v2
+# Create Jira Issue
 
 Create Jira issues (Task, Story, Bug, Subtask) with intelligent defaults, validation, and context-aware descriptions.
-
-## Repository Mappings
-
-```
-sites-db          → SD
-subjects-db       → SDB
-audits-public-api → APA
-```
-
-To add mappings: Edit this section when adopting for new repositories.
 
 ## Workflow
 
@@ -23,7 +13,7 @@ To add mappings: Edit this section when adopting for new repositories.
 1. INITIALIZE
    ├── Get cloud ID
    ├── Detect repo → resolve project key
-   └── Detect branch ticket (e.g., SD-316 from branch name)
+   └── Detect branch ticket (e.g., {BRANCH-TICKET} from branch name)
 
 2. GATHER INFO
    ├── Validate issue type against project
@@ -48,14 +38,16 @@ To add mappings: Edit this section when adopting for new repositories.
 ```
 getAccessibleAtlassianResources()
 → Extract cloudId for subsequent calls
+→ Construct base URL: https://{domain}.atlassian.net (from the resource's url field)
 ```
 
 ### Detect Repository
 
 1. Try: `git remote get-url origin` → parse repo name
 2. Fallback: current directory name
-3. Look up in mappings table above
-4. If no mapping: call `getVisibleJiraProjects` and ask user
+3. Call `getVisibleJiraProjects` to list available projects
+4. If repo name matches a project name or key, use it automatically
+5. Otherwise ask the user which project to use
 
 ### Detect Branch Ticket
 
@@ -64,8 +56,8 @@ git branch --show-current
 ```
 
 Extract ticket ID using patterns:
-- `SD-316-add-feature` → `SD-316`
-- `feature/EP-100-new-api` → `EP-100`
+- `{PROJ-316}-add-feature` → `{PROJ-316}`
+- `feature/{BRANCH-TICKET}-new-api` → `{BRANCH-TICKET}`
 - `main` → none
 
 ## Step 2: Gather Information
@@ -81,7 +73,7 @@ getJiraProjectIssueTypesMetadata(cloudId, projectKey)
 
 If requested type unavailable:
 ```
-"SD doesn't have 'Story'. Available types:
+"{projectKey} doesn't have 'Story'. Available types:
  - Task
  - Bug
  - Sub-task
@@ -94,6 +86,8 @@ Which would you like?"
 - Subtasks require a parent Task or Story (NOT an Epic)
 - The `parent` field works for both Epic→Task/Story and Task/Story→Subtask hierarchies
 - If user requests Subtask without parent, prompt: "Subtasks need a parent Task or Story. Which issue should this be under?"
+
+**Bug issues:** Use the bug description template from `bug-template.md` to structure the description.
 
 ### Clarify Summary (if vague)
 
@@ -116,7 +110,7 @@ If branch ticket detected, include it as an option:
 
 ```
 "What's the parent for this issue?
- 1. SD-316 (current branch)
+ 1. {BRANCH-TICKET} (current branch)
  2. Enter different ticket ID
  3. Search for an epic/story
  4. No parent"
@@ -125,7 +119,7 @@ If branch ticket detected, include it as an option:
 Without branch ticket:
 ```
 "What's the parent for this issue?
- 1. Enter ticket ID directly (e.g., EP-928)
+ 1. Enter ticket ID directly (e.g., {PROJ-100})
  2. Search for an epic/story
  3. No parent"
 ```
@@ -134,7 +128,7 @@ Without branch ticket:
 ```
 searchJiraIssuesUsingJql(
   cloudId,
-  jql: "project = {key} AND type in (Epic, Story, Task) AND status != Done AND summary ~ '{term}'"
+  jql: "project = {projectKey} AND type in (Epic, Story, Task) AND status != Done AND summary ~ '{term}'"
 )
 ```
 
@@ -145,10 +139,10 @@ Present numbered results for selection.
 **Only if:** Branch ticket detected AND parent differs from branch ticket.
 
 ```
-"You're on branch SD-316. Link new task to SD-316?
- 1. Blocks SD-316
- 2. Is blocked by SD-316
- 3. Relates to SD-316
+"You're on branch {BRANCH-TICKET}. Link new task to {BRANCH-TICKET}?
+ 1. Blocks {BRANCH-TICKET}
+ 2. Is blocked by {BRANCH-TICKET}
+ 3. Relates to {BRANCH-TICKET}
  4. No link"
 ```
 
@@ -180,7 +174,7 @@ git diff --stat                 # Changed files
 ```
 
 **Quick summary example:**
-> Implements status notification for SetSiteAsDuplicatedCommandHandler. Part of SD-316 work to send status operation updates on site status changes.
+> Implements status notification for the command handler. Part of {BRANCH-TICKET} work to send status operation updates on status changes.
 
 **Detailed breakdown template:**
 ```markdown
@@ -197,18 +191,20 @@ git diff --stat                 # Changed files
 - [ ] [Testable outcome]
 ```
 
+**Bug issues:** Follow the structure in `bug-template.md` instead of the above templates.
+
 ## Step 4: Preview & Confirm
 
 **Always show preview before creating:**
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ Preview: New Task in SD                             │
+│ Preview: New Task in {projectKey}                   │
 ├─────────────────────────────────────────────────────┤
 │ Type:        Task                                   │
-│ Summary:     Add status notification to handler     │
-│ Parent:      EP-928 (Tech Debt - SitesDB)          │
-│ Link:        Relates to SD-316                      │
+│ Summary:     [summary]                              │
+│ Parent:      {PROJ-316} [parent summary]            │
+│ Link:        Relates to {BRANCH-TICKET}             │
 ├─────────────────────────────────────────────────────┤
 │ Description:                                        │
 │ [description content]                               │
@@ -245,24 +241,26 @@ createJiraIssue(
 
 1. **Check available tools** - Look for link-related MCP tools
 2. **Use editJiraIssue** - Some setups allow adding links via the update field
-3. **Manual fallback** - If no tool available, tell user: "Created the task. To link it to SD-316, add the link manually in Jira."
+3. **Manual fallback** - If no tool available, tell user: "Created the task. To link it to {BRANCH-TICKET}, add the link manually in Jira."
 
 Link types to support: "blocks", "is blocked by", "relates to"
 
 ### Show Result
 
 ```
-✅ Created SD-350: Add status notification to handler
-   https://qualifyze-tech.atlassian.net/browse/SD-350
-   └── Relates to SD-316
+Created {projectKey}-NNN: [summary]
+   {baseUrl}/browse/{projectKey}-NNN
+   └── Relates to {BRANCH-TICKET}
 ```
+
+The `baseUrl` is constructed from the `url` field returned by `getAccessibleAtlassianResources`.
 
 ## Error Handling
 
 | Error | Response |
 |-------|----------|
 | Cloud ID fetch fails | "Unable to connect to Jira. Try `/mcp` to re-authenticate the Atlassian MCP" |
-| Project not found | "Project '{key}' not found. Available: ..." → list projects |
+| Project not found | "Project '{projectKey}' not found. Available: ..." → list projects |
 | Parent doesn't exist | "Couldn't find {ID}. Would you like to search instead?" |
 | Creation fails | Show Jira error, offer to retry with changes |
 
@@ -299,3 +297,5 @@ These can be added if user requests or context suggests:
 | No preview | Always show preview before `createJiraIssue` |
 | Generic description | Use git/conversation context to enrich |
 | Ignoring branch context | Check branch for ticket ID, offer linking |
+| Hardcoding Jira URLs | Always construct URL from `getAccessibleAtlassianResources` response |
+| Assuming project key | Always discover via `getVisibleJiraProjects` when not obvious from context |
