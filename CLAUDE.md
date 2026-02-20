@@ -61,3 +61,7 @@ git submodule update --init --recursive
 ```
 
 Changes to nvim or tmux config should be committed in their respective upstream repos.
+
+## Working in this Repo
+
+Design documents and plans are kept locally in `docs/plans/` (not committed). Check there for context on ongoing work before making changes.
