@@ -1,0 +1,19 @@
+{
+  "name": "@benjaminrae/dotfiles",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal dotfiles including Claude Code configuration with skills and agents",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benjaminrae/.dotfiles.git"
+  },
+  "author": "Benjamin Rae",
+  "license": "MIT",
+  "scripts": {
+    "changeset": "changeset",
+    "version": "changeset version"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1"
+  }
+}
