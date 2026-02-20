@@ -124,7 +124,35 @@ if [ "$INSTALL_SKILLS" = true ]; then
     download_file "skills/jira/SKILL.md"
     download_file "skills/jira/bug-template.md"
     download_file "skills/branch-review/SKILL.md"
-    INSTALLED+=("skills/jira/SKILL.md" "skills/jira/bug-template.md" "skills/branch-review/SKILL.md")
+    download_file "skills/tdd-kata-coach/SKILL.md"
+    download_file "skills/outside-in-tdd/SKILL.md"
+    download_file "skills/tpp-guide/SKILL.md"
+    download_file "skills/tpp-guide/transformations-reference.md"
+    download_file "skills/characterization-testing/SKILL.md"
+    download_file "skills/object-calisthenics-review/SKILL.md"
+    download_file "skills/refactoring-guide/SKILL.md"
+    download_file "skills/hexagonal-module-scaffold/SKILL.md"
+    download_file "skills/hexagonal-module-scaffold/directory-template.md"
+    download_file "skills/event-storming-facilitator/SKILL.md"
+    download_file "skills/workshop-designer/SKILL.md"
+    download_file "skills/til-content-creator/SKILL.md"
+    INSTALLED+=(
+        "skills/jira/SKILL.md"
+        "skills/jira/bug-template.md"
+        "skills/branch-review/SKILL.md"
+        "skills/tdd-kata-coach/SKILL.md"
+        "skills/outside-in-tdd/SKILL.md"
+        "skills/tpp-guide/SKILL.md"
+        "skills/tpp-guide/transformations-reference.md"
+        "skills/characterization-testing/SKILL.md"
+        "skills/object-calisthenics-review/SKILL.md"
+        "skills/refactoring-guide/SKILL.md"
+        "skills/hexagonal-module-scaffold/SKILL.md"
+        "skills/hexagonal-module-scaffold/directory-template.md"
+        "skills/event-storming-facilitator/SKILL.md"
+        "skills/workshop-designer/SKILL.md"
+        "skills/til-content-creator/SKILL.md"
+    )
 fi
 
 if [ "$INSTALL_AGENTS" = true ]; then
