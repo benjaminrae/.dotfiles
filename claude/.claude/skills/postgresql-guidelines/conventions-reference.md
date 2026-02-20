@@ -15,7 +15,7 @@
 - Never use spaces in identifiers.
 - Never use quotation marks around identifiers.
 - Never use PostgreSQL reserved words as identifiers.
-- Use underscores (`_`) to separate words in PostgreSQL identifiers.
+- Use camelCase for column names. PostgreSQL lowercases all unquoted identifiers automatically.
 
 ### Database Names
 
@@ -31,21 +31,21 @@
 
 ### Column Names
 
-- **PostgreSQL**: lowercase with underscores (`created_at`, `first_name`).
-- **Application/ORM**: camelCase (`createdAt`, `firstName`).
+- Use **camelCase** (`createdAt`, `firstName`). PostgreSQL stores these as lowercase (`createdat`, `firstname`).
+- **Application/ORM**: camelCase mapping is natural since the names already match.
 - Use short, singular names that describe the value they hold.
 
 ### Primary Key Fields
 
-- Pattern: `{tablename}_id` in PostgreSQL, `{tablename}Id` in application code.
+- Pattern: `{tablename}Id` (e.g. `userId`, `orderId`). PostgreSQL stores this as lowercase (`userid`).
 - Use **UUID** as the data type when no natural key exists.
-- Example: `user_id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
+- Example: `userId UUID PRIMARY KEY DEFAULT gen_random_uuid()`
 
 ### Foreign Key Fields
 
-- Use the **same name as the primary key** in the target table.
+- Use the **same name as the primary key** in the target table (e.g. `userId` references `user.userId`).
 - When a table has multiple foreign keys to the same target table, choose distinct descriptive names.
-- Example: `created_by_user_id` and `approved_by_user_id` both referencing `user_account.user_id`.
+- Example: `createdByUserId` and `approvedByUserId` both referencing `user.userId`.
 
 ## Constraint & Index Naming
 
@@ -78,14 +78,14 @@
 -- Bad: scans and counts every matching row
 SELECT COUNT(*)
 FROM   order_item
-WHERE  order_id = '...'
+WHERE  orderId = '...'
 HAVING COUNT(*) > 0;
 
 -- Good: stops at first match
 SELECT EXISTS (
     SELECT 1
     FROM   order_item
-    WHERE  order_id = '...'
+    WHERE  orderId = '...'
 );
 ```
 
@@ -106,7 +106,7 @@ WHERE  EXISTS (
     SELECT 1
     FROM   user_account ua2
     WHERE  ua2.email = ua1.email
-      AND  ua2.user_id <> ua1.user_id
+      AND  ua2.userId <> ua1.userId
 );
 ```
 
@@ -116,7 +116,7 @@ WHERE  EXISTS (
 -- Bad: nested subqueries are hard to read and debug
 SELECT *
 FROM   (
-    SELECT order_id
+    SELECT orderId
          , total
     FROM   purchase_order
     WHERE  total > (
@@ -126,14 +126,14 @@ FROM   (
 
 -- Good: CTEs read top-to-bottom
 WITH average_total AS (
-    SELECT AVG(total) AS avg_total
+    SELECT AVG(total) AS avgTotal
     FROM   purchase_order
 )
 , expensive_orders AS (
-    SELECT order_id
+    SELECT orderId
          , total
     FROM   purchase_order
-    WHERE  total > (SELECT avg_total FROM average_total)
+    WHERE  total > (SELECT avgTotal FROM average_total)
 )
 SELECT *
 FROM   expensive_orders;
@@ -159,22 +159,22 @@ When query access patterns are known at design time, create indexes immediately.
 ### Example
 
 ```sql
-SELECT ua.user_id
-     , ua.first_name
-     , ua.last_name
+SELECT ua.userId
+     , ua.firstName
+     , ua.lastName
      , ua.email
-     , COUNT(po.order_id) AS order_count
+     , COUNT(po.orderId) AS orderCount
 FROM   user_account ua
 LEFT JOIN purchase_order po
-       ON po.user_id = ua.user_id
-WHERE  ua.created_at >= '2024-01-01'
+       ON po.userId = ua.userId
+WHERE  ua.createdAt >= '2024-01-01'
   AND  ua.status = 'active'
-GROUP BY ua.user_id
-       , ua.first_name
-       , ua.last_name
+GROUP BY ua.userId
+       , ua.firstName
+       , ua.lastName
        , ua.email
-HAVING COUNT(po.order_id) > 0
-ORDER BY order_count DESC;
+HAVING COUNT(po.orderId) > 0
+ORDER BY orderCount DESC;
 ```
 
 ## Data Types
@@ -195,7 +195,7 @@ Do **not** use the `CREATE TYPE ... AS ENUM` construct. Disadvantages:
 CREATE TABLE order_status (
     code       VARCHAR(4) PRIMARY KEY  -- 'PEND', 'SHIP', 'DLVR'
   , label      VARCHAR(50) NOT NULL
-  , sort_order SMALLINT NOT NULL
+  , sortOrder  SMALLINT NOT NULL
 );
 ```
 
@@ -208,10 +208,10 @@ Use `UUID` for primary keys when no natural key exists. Generate with `gen_rando
 ### Syntax
 
 ```sql
-INSERT INTO user_preference (user_id, preference_key, preference_value)
+INSERT INTO user_preference (userId, preferenceKey, preferenceValue)
 VALUES ('...', 'theme', 'dark')
-ON CONFLICT (user_id, preference_key)
-DO UPDATE SET preference_value = EXCLUDED.preference_value;
+ON CONFLICT (userId, preferenceKey)
+DO UPDATE SET preferenceValue = EXCLUDED.preferenceValue;
 ```
 
 ### Trigger implications
@@ -242,7 +242,7 @@ Cascading deletes silently destroy data across related tables. Instead, handle d
 Use `TIMESTAMPTZ` (timestamp with time zone) for all timestamp columns. Convert to local time only at the presentation layer.
 
 ```sql
-created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
 
 ## Security
