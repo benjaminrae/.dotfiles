@@ -77,13 +77,13 @@ Use coverage to navigate to untested paths and write characterization tests for 
 
 This is critical. Testing shallow-to-deep builds your understanding gradually. Refactoring deep-to-shallow means each refactoring step affects the smallest possible scope.
 
-## Important Reminders
+## Anti-Patterns
 
-- These are NOT black box tests -- look at the code, use it to guide your tests
-- You are capturing actual behavior, not intended behavior
-- Do not fix bugs you discover during characterization testing -- capture the current behavior, bugs and all
-- Give tests meaningful names that describe the behavior you discovered
-- Only after the safety net is complete should you begin refactoring
+- Treating these as black box tests — look at the code, use it to guide your tests
+- Writing tests based on intended behavior instead of actual behavior
+- Fixing bugs discovered during characterization testing — capture the current behavior, bugs and all
+- Using generic test names — give tests meaningful names that describe the behavior you discovered
+- Starting refactoring before the safety net is complete
 
 ## When is the Safety Net Sufficient?
 
