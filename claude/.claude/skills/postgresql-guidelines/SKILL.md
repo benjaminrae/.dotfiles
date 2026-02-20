@@ -1,6 +1,6 @@
 ---
 name: postgresql-guidelines
-description: "Use when writing or reviewing PostgreSQL code — schema design, migrations, queries, naming conventions. Enforces team PostgreSQL conventions and flags anti-patterns."
+description: "Use when writing or reviewing PostgreSQL code — schema design, migrations, queries, naming conventions, slow queries, cascade deletes, enum migrations, or naming inconsistencies in database objects."
 ---
 
 # PostgreSQL Guidelines
@@ -152,3 +152,16 @@ Use this checklist when reviewing PostgreSQL code. Report each violation with: *
 | Lowercase SQL keywords | ALL CAPS keywords |
 | Missing semicolons | Always terminate with `;` |
 | `TIMESTAMP` without timezone | `TIMESTAMPTZ` (always UTC) |
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Using `COUNT(*)` to check if rows exist | Use `EXISTS (SELECT 1 ...)` — stops at first match |
+| Creating PostgreSQL ENUM types | Use reference tables with short PK — full CRUD, metadata, CDC-safe |
+| Adding `ON DELETE CASCADE` to foreign keys | Handle deletions explicitly in application code |
+| Using UPSERT without reviewing trigger implications | `BEFORE INSERT` triggers fire and are not rolled back on conflict path |
+| Writing SQL keywords in lowercase | Always ALL CAPS: `SELECT`, `FROM`, `WHERE`, `JOIN` |
+| Using trailing commas in column lists | Use leading commas — easier to comment out individual fields |
+| Waiting for performance issues before creating indexes | Create indexes preemptively when query patterns are known |
+| Using subqueries for complex logic | Rewrite as CTEs — read top-to-bottom, easier to debug |
