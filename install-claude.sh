@@ -132,6 +132,8 @@ if [ "$INSTALL_SKILLS" = true ]; then
     download_file "skills/characterization-testing/SKILL.md"
     download_file "skills/object-calisthenics-review/SKILL.md"
     download_file "skills/refactoring-guide/SKILL.md"
+    download_file "skills/postgresql-guidelines/SKILL.md"
+    download_file "skills/postgresql-guidelines/conventions-reference.md"
     # Agent-associated skills
     download_file "skills/domain-driven-design/ddd-expert-knowledge-base.md"
     download_file "skills/cognitive-load-analyzer/cli-dimensions-and-formulas.md"
@@ -161,6 +163,8 @@ if [ "$INSTALL_SKILLS" = true ]; then
         "skills/characterization-testing/SKILL.md"
         "skills/object-calisthenics-review/SKILL.md"
         "skills/refactoring-guide/SKILL.md"
+        "skills/postgresql-guidelines/SKILL.md"
+        "skills/postgresql-guidelines/conventions-reference.md"
         "skills/domain-driven-design/ddd-expert-knowledge-base.md"
         "skills/cognitive-load-analyzer/cli-dimensions-and-formulas.md"
         "skills/cognitive-load-analyzer/cli-tool-commands.md"
