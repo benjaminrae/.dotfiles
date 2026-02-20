@@ -123,6 +123,7 @@ fi
 if [ "$INSTALL_SKILLS" = true ]; then
     download_file "skills/jira/SKILL.md"
     download_file "skills/jira/bug-template.md"
+    download_file "skills/jira/mcp-reference.md"
     download_file "skills/branch-review/SKILL.md"
     download_file "skills/tdd-kata-coach/SKILL.md"
     download_file "skills/outside-in-tdd/SKILL.md"
@@ -151,6 +152,7 @@ if [ "$INSTALL_SKILLS" = true ]; then
     INSTALLED+=(
         "skills/jira/SKILL.md"
         "skills/jira/bug-template.md"
+        "skills/jira/mcp-reference.md"
         "skills/branch-review/SKILL.md"
         "skills/tdd-kata-coach/SKILL.md"
         "skills/outside-in-tdd/SKILL.md"
