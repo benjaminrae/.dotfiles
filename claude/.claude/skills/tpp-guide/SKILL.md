@@ -35,8 +35,9 @@ At each GREEN step:
 1. Look at the failing test
 2. Consider which transformations could make it pass
 3. **Choose the highest-priority (lowest number) transformation that works**
-4. If a transformation doesn't directly change behavior, it may enable the next one (e.g., `constant -> scalar` enables state changes)
-5. Avoid introducing duplication -- but duplication as a stopgap can reveal patterns for generalization
+4. **When multiple transformations could work:** Always pick the highest-priority one. If two transformations have the same priority, prefer the one that introduces less duplication. If still tied, either choice is fine — the next test will course-correct.
+5. If a transformation doesn't directly change behavior, it may enable the next one (e.g., `constant -> scalar` enables state changes)
+6. Avoid introducing duplication -- but duplication as a stopgap can reveal patterns for generalization
 
 ## Key Principles
 
