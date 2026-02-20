@@ -1,6 +1,6 @@
 ---
 name: branch-review
-description: Perform a comprehensive multi-agent code review of all changes in the current branch compared to main. Discovers repo tooling automatically and outputs results to reviews/<branch-name>.md.
+description: Use when a feature branch is ready for review or before merging to main. Launches parallel review agents covering architecture, test quality, coverage, mutation testing, linting, formatting, and CLAUDE.md standards.
 ---
 
 ## Overview
@@ -262,6 +262,16 @@ Write the report to `reviews/<branch-name>.md` with this structure:
 
 <Numbered list of all issues that need to be fixed, ordered by severity>
 ```
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Skipping tooling discovery | Always run Step 3 first — don't assume tooling |
+| Failing when a tool is missing | Mark as "Not available" in report, don't fail the review |
+| Running agents before automated checks | Run automated checks (Step 4) first — agents need coverage data |
+| Not reading ALL changed files | Use `git diff main...HEAD` to get the full diff, not just latest commit |
+| Hardcoding tool commands | Use discovered commands from Step 3, not assumed defaults |
 
 ### Step 8: Present results
 
