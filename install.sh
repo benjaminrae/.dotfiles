@@ -24,4 +24,6 @@ move_with_backup ~/.claude/settings.json
 move_dir_with_backup ~/.claude/skills
 move_dir_with_backup ~/.claude/agents
 
-stow -v --target=$HOME zsh tmux nvim claude
+move_with_backup ~/.gitconfig
+
+stow -v --target=$HOME zsh tmux nvim claude git
