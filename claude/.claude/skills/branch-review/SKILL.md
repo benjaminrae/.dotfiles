@@ -62,6 +62,12 @@ All `run_in_background: true`.
 
 `TaskOutput` `block: true`, `timeout: 300000` per agent.
 
+## Step 4.5: Validate findings
+
+Launch finding-validator agent: "Read finding-validator.md. Validate findings in {tmp}/ for `{BRANCH}`. Write validated-findings.md to {tmp}/."
+
+`run_in_background: true`, then `TaskOutput block: true`, `timeout: 300000`.
+
 ## Step 5: Compile report
 
 General-purpose agent: "Read report-compiler.md. Compile `{BRANCH}` from {tmp}/. Selected: {selected_options}."
