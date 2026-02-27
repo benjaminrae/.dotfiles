@@ -322,6 +322,7 @@ When working with my code:
 6. **Assess refactoring after every green** - Look for opportunities to improve code structure, but only refactor if it adds value
 7. **Keep project docs current** - update them whenever you introduce meaningful changes
 8. Commit atomic changes as long as the tests are in green
+d9. When custom skills or tools exist for a task (e.g., changeset tool, writing-skills skill), use them instead of doing it manually
 
 ### Code Changes
 
