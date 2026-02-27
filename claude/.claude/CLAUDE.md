@@ -277,6 +277,10 @@ if (user.age >= 18 && user.purchaseHistory.length > 0 &&
 - Use interface for defining behaviour (methods)
 - Use type for defining data structures (dtos)
 
+## Git Workflow
+
+- When working on feature branches, ALWAYS use worktrees instead of direct checkout. Never switch branches in the main working directory.
+
 ## Manual Verification
 
 After implementation is complete and automated tests pass, ALWAYS perform manual verification against the running system before claiming work is done.
