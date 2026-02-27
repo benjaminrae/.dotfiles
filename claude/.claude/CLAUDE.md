@@ -188,6 +188,7 @@ Triangulation is the practice of choosing the next test case that will force you
 - **Avoid comments** - they often indicate unclear code
 - **Don't add comments** as a substitute for better code structure
 - JSDOC can be added if but only if representing a public API
+- **Never use magic numbers or magic strings** — always extract constants for test values, coordinate bounds, status codes, and similar literals
 
 ```typescript
 // ✅ Do This
