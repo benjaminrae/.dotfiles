@@ -16,6 +16,7 @@ Sections for unselected optional analyses should show "Not selected for this rev
 
 <Overall assessment: PASS / PASS WITH WARNINGS / FAIL>
 <Brief summary of findings>
+<Validation: X findings verified, Y unverifiable, Z hallucinated (removed) — or "Finding validation was not performed">
 
 ## 1. Architecture Compliance
 
