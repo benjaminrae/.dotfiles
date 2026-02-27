@@ -25,7 +25,7 @@ For each changed file, check:
 
 ## 3. Write Output
 
-Write `{tmp}/standards.md`:
+**You MUST use the Bash tool** (not Write) to save `{tmp}/standards.md`. Use `cat <<'EOF' > file`.
 
 ```
 ## Standards Review

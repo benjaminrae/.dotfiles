@@ -25,7 +25,7 @@ For each SQL statement or schema definition found, check:
 
 ## 3. Write Output
 
-Write `{tmp}/postgresql.md`:
+**You MUST use the Bash tool** (not Write) to save `{tmp}/postgresql.md`. Use `cat <<'EOF' > file`.
 
 ```
 ## PostgreSQL Conventions Review

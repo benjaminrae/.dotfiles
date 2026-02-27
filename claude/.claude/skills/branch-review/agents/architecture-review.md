@@ -24,7 +24,7 @@ For each changed file, check:
 
 ## 3. Write Output
 
-Write `{tmp}/architecture.md`:
+**You MUST use the Bash tool** (not Write) to save `{tmp}/architecture.md`. Use `cat <<'EOF' > file`.
 
 ```
 ## Architecture Review

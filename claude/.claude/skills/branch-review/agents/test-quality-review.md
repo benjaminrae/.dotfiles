@@ -24,7 +24,7 @@ Check:
 
 ## 3. Write Output
 
-Write `{tmp}/test-quality.md`:
+**You MUST use the Bash tool** (not Write) to save `{tmp}/test-quality.md`. Use `cat <<'EOF' > file`.
 
 ```
 ## Test Quality Review
