@@ -2,6 +2,12 @@
 
 You receive `{branch}`, `{tmp}` from the orchestrator. All review agents have already finished and their outputs are in `{tmp}/`.
 
+## CRITICAL RULES
+
+- **NEVER invent, assume, or fabricate file contents.** Only report what you actually read with the Read tool.
+- **If a file referenced in a finding does not exist, classify the finding as HALLUCINATED immediately.**
+- **Return your findings as text output.** Do NOT write files — the orchestrator handles that.
+
 ## Purpose
 
 Cross-check every finding from review agents against actual source code to filter hallucinated issues.
@@ -41,9 +47,9 @@ For each finding:
 For VERIFIED: quote the relevant code line(s)
 For HALLUCINATED: quote the code that disproves the claim
 
-## 4. Write Output
+## 4. Return Output
 
-Write `{tmp}/validated-findings.md` with this structure:
+Return your findings as text in this structure:
 
 ```
 # Validated Findings
@@ -83,4 +89,4 @@ Write `{tmp}/validated-findings.md` with this structure:
 
 ## 5. Return Result
 
-Return the validation summary (counts) and the path `{tmp}/validated-findings.md` to the orchestrator.
+Return the validation summary (counts) and the full validated findings text to the orchestrator.

@@ -1,4 +1,5 @@
 {
+  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
       "Read",
@@ -17,17 +18,10 @@
       "Bash(git rebase *)",
       "Bash(gh pr *)",
       "Bash(gh api *)",
-      "Bash(gh issue *)"
+      "Bash(gh issue *)",
+      "Bash(cat <<*)",
+      "Bash(make *)"
     ]
-  },
-  "includeCoAuthoredBy": false,
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true
-  },
-  "alwaysThinkingEnabled": true,
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y @owloops/claude-powerline@latest --style=powerline"
   },
   "hooks": {
     "PreToolUse": [
@@ -41,5 +35,17 @@
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y @owloops/claude-powerline@latest --style=powerline"
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "atlassian@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true
+  },
+  "alwaysThinkingEnabled": true
 }

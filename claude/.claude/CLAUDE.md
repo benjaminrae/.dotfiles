@@ -124,11 +124,7 @@ class StringCalculator {
 
 ### Test Organization
 
-Write unit tests next to the production code. Not every piece of production code needs a unit test. Prefer testing units of behaviour instead of units of code. 
-
-Unit tests should use the suffix `.spec.ts`
-Integration tests shouuld use the suffix `.integration.spec.ts`
-End-to-End tests should use the suffix `.e2e.spec.ts`
+Not every piece of production code needs a unit test. Prefer testing units of behaviour instead of units of code.
 
 ### Triangulation and Choosing the Next Test Case
 

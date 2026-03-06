@@ -112,7 +112,10 @@ mkdir -p "$CLAUDE_DIR"
 
 if [ "$INSTALL_SETTINGS" = true ]; then
     download_file "settings.json"
-    INSTALLED+=("settings.json")
+    download_file "hooks/pre-tool-use-bash.sh"
+    chmod +x "${CLAUDE_DIR}/hooks/pre-tool-use-bash.sh"
+    download_file "templates/java-spring-boot-CLAUDE.md"
+    INSTALLED+=("settings.json" "hooks/pre-tool-use-bash.sh" "templates/java-spring-boot-CLAUDE.md")
 fi
 
 if [ "$INSTALL_CLAUDE_MD" = true ]; then
@@ -125,6 +128,15 @@ if [ "$INSTALL_SKILLS" = true ]; then
     download_file "skills/jira/bug-template.md"
     download_file "skills/jira/mcp-reference.md"
     download_file "skills/branch-review/SKILL.md"
+    download_file "skills/branch-review/report-template.md"
+    download_file "skills/branch-review/agents/automated-checks.md"
+    download_file "skills/branch-review/agents/architecture-review.md"
+    download_file "skills/branch-review/agents/test-quality-review.md"
+    download_file "skills/branch-review/agents/standards-review.md"
+    download_file "skills/branch-review/agents/postgresql-review.md"
+    download_file "skills/branch-review/agents/report-compiler.md"
+    download_file "skills/branch-review/agents/finding-validator.md"
+    download_file "skills/java-conventions/SKILL.md"
     download_file "skills/tdd-kata-coach/SKILL.md"
     download_file "skills/outside-in-tdd/SKILL.md"
     download_file "skills/tpp-guide/SKILL.md"
@@ -156,6 +168,15 @@ if [ "$INSTALL_SKILLS" = true ]; then
         "skills/jira/bug-template.md"
         "skills/jira/mcp-reference.md"
         "skills/branch-review/SKILL.md"
+        "skills/branch-review/report-template.md"
+        "skills/branch-review/agents/automated-checks.md"
+        "skills/branch-review/agents/architecture-review.md"
+        "skills/branch-review/agents/test-quality-review.md"
+        "skills/branch-review/agents/standards-review.md"
+        "skills/branch-review/agents/postgresql-review.md"
+        "skills/branch-review/agents/report-compiler.md"
+        "skills/branch-review/agents/finding-validator.md"
+        "skills/java-conventions/SKILL.md"
         "skills/tdd-kata-coach/SKILL.md"
         "skills/outside-in-tdd/SKILL.md"
         "skills/tpp-guide/SKILL.md"
