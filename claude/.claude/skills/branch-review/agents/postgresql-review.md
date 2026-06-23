@@ -2,6 +2,8 @@
 
 You receive `{branch}` (branch name) and `{tmp}` (temp directory path) from the orchestrator.
 
+**Return your findings as text output.** Do NOT write files — the orchestrator handles that.
+
 ## 1. Gather SQL Context
 
 Read the conventions reference and all changed SQL-related files:
@@ -11,6 +13,8 @@ cat ~/.claude/skills/postgresql-guidelines/conventions-reference.md
 git diff main...{branch} -- '*.sql'
 git diff main...{branch} -- '**/migrations/**'
 ```
+
+If `~/.claude/skills/postgresql-guidelines/conventions-reference.md` is missing (the `postgresql-guidelines` skill is not installed), note that in your output and fall back to general PostgreSQL best practices for the checks below.
 
 Also check the full diff for inline SQL in application code (raw queries, query builders, ORM migrations).
 
@@ -23,9 +27,9 @@ For each SQL statement or schema definition found, check:
 - **Schema design** -- ENUM types (prefer check constraints), `ON DELETE CASCADE` without justification, `ON CONFLICT` outside migrations
 - **SQL style** -- keywords must be UPPERCASE, no trailing commas, statements end with semicolons
 
-## 3. Write Output
+## 3. Return Output
 
-**You MUST use the Bash tool** (not Write) to save `{tmp}/postgresql.md`. Use `cat <<'EOF' > file`.
+Return your findings as text in this format (the orchestrator writes them to `{tmp}/postgresql.md`):
 
 ```
 ## PostgreSQL Conventions Review
@@ -42,4 +46,4 @@ For each SQL statement or schema definition found, check:
 <optional observations about overall SQL quality>
 ```
 
-If no violations found, write an empty violations table and verdict PASS.
+If no violations found, return an empty violations table and verdict PASS.

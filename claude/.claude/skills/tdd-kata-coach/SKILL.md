@@ -1,6 +1,6 @@
 ---
 name: tdd-kata-coach
-description: "Use when practicing TDD through coding katas, teaching TDD to others, or coaching someone through the RED-GREEN-REFACTOR cycle. Enforces ZOMBIES ordering, baby steps, triangulation, and commit discipline."
+description: "Use when practicing or coaching a self-contained TDD kata or practice exercise through the RED-GREEN-REFACTOR cycle. Enforces ZOMBIES test-case ordering, baby steps, triangulation, and commit discipline. Not for: implementing an end-to-end feature or vertical slice (use outside-in-tdd), choosing the next code transformation (use tpp-guide), or refactoring after green (use refactoring-guide)."
 ---
 
 # TDD Kata Coach
@@ -29,11 +29,11 @@ Before writing any code, create a comprehensive list of test cases ordered using
 | **E** | Exceptional | Error cases, invalid input |
 | **S** | Simple scenarios | Start with the simplest, build complexity |
 
-Present the ordered list to the user and ask: "Does this test case ordering look right? Any cases missing?"
+Confirm the ordering before starting: "Does this test case ordering look right? Any cases missing?" Skip this confirmation if the user has already provided a plan or ordering.
 
 ### Phase 2: RED-GREEN-REFACTOR cycle
 
-For each test case, follow this exact sequence:
+For each test case, follow this sequence:
 
 #### RED — Write a failing test
 
@@ -43,6 +43,7 @@ For each test case, follow this exact sequence:
    - A correct failure is due to incorrect or missing behavior in the implementation
    - Compilation errors, reference errors, and typos are NOT correct failures
    - If a method is not yet implemented, it should explicitly `throw new Error('Method not implemented')`
+   - Read the failure message and confirm it names missing behavior, not a syntax/reference error
 4. If the failure is wrong, fix the test setup until it fails correctly
 
 #### GREEN — Write minimum code to pass
@@ -81,6 +82,12 @@ Choose the next test case that will:
 Go back to Phase 2 with the next test case. Continue until all test cases from Phase 1 are implemented.
 
 After completing all tests, do a final refactoring pass across both production and test code.
+
+## When stuck
+
+- **A refactor breaks tests twice:** stop, revert to the last green, and pick a different, smaller refactor — do not push the same change through.
+- **A test won't fail for the right reason:** the behavior may already exist or the test asserts nothing new. Triangulate a different case that forces a change, or fix the test setup.
+- **Pressure to skip RED:** restate the hard gate (no production code without a failing test) and offer to write the smallest possible test to keep moving.
 
 ## Test Organization
 

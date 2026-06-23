@@ -24,6 +24,10 @@ zinit light MichaelAquilina/zsh-you-should-use
 zinit light fdellwing/zsh-bat
 zinit light zsh-users/zsh-syntax-highlighting
 
+# Secrets (gitignored; see .dotfiles/.env.example)
+DOTFILES="${DOTFILES:-$HOME/cowork/dev/.dotfiles}"
+[ -f "$DOTFILES/.env" ] && source "$DOTFILES/.env"
+
 # Aliases
 alias vim="nvim"
 alias air='~/go/bin/air'
@@ -35,3 +39,11 @@ export NVM_DIR="$HOME/.nvm"
 
 # PATH
 export PATH=$PATH:~/.npm-global/bin
+# Created by `pipx` on 2026-03-11 11:54:24
+export PATH="$PATH:/Users/benjamin.rae/.local/bin"
+
+# AsyncAPI CLI Autocomplete
+
+ASYNCAPI_AC_ZSH_SETUP_PATH=/Users/benjamin.rae/Library/Caches/@asyncapi/cli/autocomplete/zsh_setup && test -f $ASYNCAPI_AC_ZSH_SETUP_PATH && source $ASYNCAPI_AC_ZSH_SETUP_PATH; # asyncapi autocomplete setup
+
+

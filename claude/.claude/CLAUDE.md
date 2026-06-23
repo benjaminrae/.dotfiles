@@ -274,6 +274,25 @@ if (user.age >= 18 && user.purchaseHistory.length > 0 &&
 - Use interface for defining behaviour (methods)
 - Use type for defining data structures (dtos)
 
+## No Test-Only Code in Production
+
+**Never leave test-only accessors, hooks, or helpers in production source on any project.** This includes:
+
+- Methods named `*ForTesting`, `*ForTest`, `exposeXForTests`, etc.
+- `public` / `static` getters whose only callers are tests
+- `@VisibleForTesting` accessors added "just so tests can peek"
+- Reflection-friendly setters/fields added for test convenience
+- Debug toggles or fake-clock hooks placed on the production class
+
+If a test needs to observe state production code does not need:
+
+1. Inject a collaborator the test can stub (constructor injection, port/adapter)
+2. Move the inspectable state into a test-support helper class under `src/test/...` (or the language equivalent) that reaches in via package / module / reflective access
+3. Drive the test through the public production API and assert on observable side effects
+4. If a snapshot of internal state is genuinely the only signal, gate it behind a separate seam (e.g. a `Probe` interface) injected only in test wiring
+
+Treat this as a review-blocking smell. Scan every diff for `*ForTesting`, `@VisibleForTesting`, or `public`/`static` members whose only call sites live under `src/test/...`.
+
 ## Git Workflow
 
 - When working on feature branches, ALWAYS use worktrees instead of direct checkout. Never switch branches in the main working directory.

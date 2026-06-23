@@ -16,7 +16,7 @@ elif echo "$COMMAND" | grep -qE '^git push\b'; then
   elif ! make -n pre-push >/dev/null 2>&1; then
     echo "Warning: No 'pre-push' target in Makefile. Add one to run checks before pushes." >&2
   else
-    make pre-push 2>&1 || exit 2
+    make test 2>&1 || exit 2
   fi
 fi
 

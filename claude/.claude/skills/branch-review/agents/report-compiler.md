@@ -42,8 +42,8 @@ If `validated-findings.md` does not exist (validator agent failed or was skipped
 
 ## 4. Write Report
 
-Fill the template, collect all violations into the **Action Items** list ordered by severity, and write to `reviews/{branch}.md`.
+Fill the template, collect all violations into the **Action Items** list ordered by severity, and write to the report path the orchestrator gave you in the prompt (`REPORT_PATH`). Only fall back to `reviews/{branch}.md` if no path was provided.
 
 ## 5. Return Result
 
-Return the overall verdict and report path `reviews/{branch}.md` to the orchestrator.
+Return the overall verdict and the report path you wrote to the orchestrator.

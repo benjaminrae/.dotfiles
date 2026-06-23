@@ -1,18 +1,18 @@
 ---
-name: qa-review
-description: Analyzes a branch or PR diff and generates a comprehensive QA review report saved to /qa-reviews/<branch-name>.md. Use when the user wants to do QA, test a branch, review what to test, or prepare a test plan for a feature or bug fix.
-disable-model-invocation: true
-allowed-tools: Bash(git *), Bash(gh *), Bash(mkdir *), Read, Write, Grep, Glob, Agent
-argument-hint: de[branch|PR-number|description]
+name: qa-report
+description: Analyzes a branch or PR diff and generates a comprehensive QA review report. Saves to the repository's existing QA-docs convention when one is detected, otherwise falls back to qa-reviews/{branch-name}.md. Use when the user wants to do QA, test a branch, review what to test, or prepare a test plan for a feature or bug fix.
+disable-model-invocation: false
+allowed-tools: Bash(git *), Bash(gh *), Bash(mkdir *), Bash(ls *), Bash(find *), Bash(test *), Bash(cat *), Read, Write, Grep, Glob, Agent
+argument-hint: "[branch | PR-number | description]"
 ---
 
-# QA Review Generator
+# QA Report Generator
 
 You are a QA analyst. Your job is to analyze code changes and produce a thorough, actionable QA review report that ensures nothing is missed during manual testing. The report is written to a markdown file for future reference.
 
 ## Input
 
-The user invokes this skill with: `/qa-review $ARGUMENTS`
+The user invokes this skill with: `/qa-report $ARGUMENTS`
 
 `$ARGUMENTS` can be:
 - **Empty** — analyze the current branch vs the base branch
@@ -27,13 +27,46 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Branch: $BRANCH"
 ```
 
-Sanitize the branch name for use as a filename (replace `/` with `-`, remove special characters). Create the output directory:
+Sanitize the branch name for use as a filename (replace `/` with `-`, remove special characters).
 
-```bash
-mkdir -p qa-reviews
-```
+### Step 1a: Detect the repository's QA-docs convention (do this BEFORE choosing an output path)
 
-The report will be written to: `qa-reviews/<sanitized-branch-name>.md`
+`qa-reviews/` is only a **fallback**. Many repos already have an established home for QA / test-plan documents, and writing to `qa-reviews/` instead is a real, recurring mistake. Detect an existing convention first, in this priority order, and stop at the first match:
+
+1. **Instruction / context files.** Read any of `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `CONTEXT.md`, `.cursorrules`, `CONTRIBUTING.md`, `README.md` at the repo root (and, when working from a git worktree, the **main working tree's** copies — the convention folders are often invisible from worktrees). Look for an explicit statement of where QA reports, test plans, verification notes, or lifecycle artifacts belong. Honor it exactly, including any naming convention it documents (e.g. a date-prefixed or stage-numbered filename). If the docs deprecate `qa-reviews/`, do not use it.
+
+   ```bash
+   # Resolve the MAIN working tree too — lifecycle folders may not exist in a worktree
+   MAIN_WT=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')
+   for d in "$(git rev-parse --show-toplevel)" "$MAIN_WT"; do
+     for f in CLAUDE.md AGENTS.md GEMINI.md CONTEXT.md .cursorrules CONTRIBUTING.md README.md; do
+       [ -f "$d/$f" ] && grep -niE 'qa|test plan|verification|lifecycle|07[_-]?qa|qa-report' "$d/$f" >/dev/null 2>&1 && echo "convention hint in $d/$f"
+     done
+   done
+   ```
+
+2. **Existing QA-doc folders.** If the instruction files are silent, look (in the repo root AND the main working tree) for a directory that already holds QA documents. Common shapes: a numbered lifecycle folder such as `07_qa/` (ICM convention), or `qa/`, `docs/qa/`, `qa-reports/`, `test-plans/`, `docs/test-plans/`. Prefer a folder that already contains QA-style markdown.
+
+   ```bash
+   MAIN_WT=$(git worktree list --porcelain | awk '/^worktree /{print $2; exit}')
+   for base in "$(git rev-parse --show-toplevel)" "$MAIN_WT"; do
+     ls -d "$base"/0*_qa "$base"/qa "$base"/docs/qa "$base"/qa-reports "$base"/test-plans "$base"/docs/test-plans 2>/dev/null
+   done
+   ```
+
+3. **Fallback.** Only if neither a documented convention nor an existing QA-doc folder is found, use `qa-reviews/` in the current working tree:
+
+   ```bash
+   mkdir -p qa-reviews
+   ```
+
+### Step 1b: Choose the output path and filename
+
+- Set `OUTPUT_DIR` to the detected convention folder (resolved to an absolute path on the main working tree when applicable), or `qa-reviews/` if falling back.
+- **Match the filename convention already used in `OUTPUT_DIR`.** Inspect existing files there (`ls "$OUTPUT_DIR"`) and follow the dominant, most-recent pattern — e.g. a ticket-prefixed `SDB-123-<slug>.md`, or a documented `YYYY-MM-DD-<slug>_NN.md`. Only use the bare `<sanitized-branch-name>.md` form when the folder is empty or has no discernible pattern.
+- State the chosen path to the user before writing, e.g. `Writing QA report to 07_qa/2026-06-22-sdb-371-<slug>_07.md (detected ICM convention)`.
+
+The report will be written to: `<OUTPUT_DIR>/<filename>` per the rules above (NOT unconditionally `qa-reviews/<branch>.md`).
 
 ## Step 2: Gather Context
 
@@ -69,7 +102,7 @@ For each changed file, determine:
 
 ## Step 4: Generate the QA Review Report
 
-Write the report to `qa-reviews/<sanitized-branch-name>.md` with this structure:
+Write the report to the `<OUTPUT_DIR>/<filename>` chosen in Step 1b (the detected convention folder, or `qa-reviews/<sanitized-branch-name>.md` only as a fallback) with this structure:
 
 ```markdown
 # QA Review: <branch-name>

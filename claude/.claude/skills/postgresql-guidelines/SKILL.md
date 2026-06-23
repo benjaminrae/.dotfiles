@@ -9,9 +9,7 @@ description: "Use when writing or reviewing PostgreSQL code — schema design, m
 
 This skill enforces team PostgreSQL conventions when writing or reviewing database code. It covers schema design, naming, query patterns, SQL style, and common anti-patterns. See `conventions-reference.md` for the full reference with examples.
 
-<HARD-GATE>
-NEVER use `ON DELETE CASCADE`. Handle deletions explicitly in application code where consequences are visible, testable, and auditable.
-</HARD-GATE>
+**Hard rule (team policy):** NEVER use `ON DELETE CASCADE`. Cascading deletes silently destroy data across related tables. Handle deletions explicitly in application code where consequences are visible, testable, and auditable.
 
 ## Writing Mode
 
@@ -19,12 +17,14 @@ Use this checklist when implementing database changes (schemas, migrations, quer
 
 ### Naming
 
+PostgreSQL folds every unquoted identifier to lowercase. camelCase is therefore a **source-readability convention only** for columns and key fields (`createdAt` is stored as `createdat`); never rely on case to distinguish two identifiers, and never wrap an identifier in double quotes to preserve case. Multi-token object names that must survive folding (constraints, indexes) use lowercase snake_case so the stored name stays readable.
+
 - **Tables**: singular entity names, lowercase with underscores (`user_account`, `purchase_order`)
-- **Columns**: camelCase (`createdAt`, `firstName`). PostgreSQL stores these as lowercase automatically
+- **Columns**: camelCase in source (`createdAt`, `firstName`); stored lowercase by PostgreSQL
 - **Primary keys**: `{tablename}Id` UUID (e.g. `userId UUID PRIMARY KEY DEFAULT gen_random_uuid()`)
 - **Foreign keys**: match the target PK name (e.g. `userId` references `user.userId`). Use descriptive names for multiple FKs to the same table (`createdByUserId`, `approvedByUserId`)
 - **Cross/join tables**: `{table1}_{table2}` (e.g. `user_role`, `order_product`)
-- **Constraints and indexes**: follow `{prefix}_{table}_{field}` pattern:
+- **Constraints and indexes**: lowercase snake_case, `{prefix}_{table}_{field}` pattern. Multi-word field segments use underscores (e.g. `fk_order_user_id`, `idx_permission_object_id`):
   - PK: `pk_{table}_{field}`
   - FK: `fk_{table}_{field}`
   - Unique: `uq_{table}_{field}`
@@ -66,11 +66,11 @@ Use this checklist when implementing database changes (schemas, migrations, quer
 
 ### Constraints
 
-- **NEVER** use `ON DELETE CASCADE` -- handle deletions explicitly in application code
+- **NEVER** use `ON DELETE CASCADE` — handle deletions explicitly in application code (team policy; see hard rule above)
 
 ### UPSERT
 
-- **Avoid UPSERT in application code** except during data migrations
+- **Team policy: avoid UPSERT in application code** except during data migrations — its trigger semantics are surprising
 - Review trigger implications: `BEFORE INSERT` triggers fire even when the row takes the `ON CONFLICT DO UPDATE` path, and side-effects are not rolled back
 
 ### Timezone
@@ -79,32 +79,26 @@ Use this checklist when implementing database changes (schemas, migrations, quer
 - Use `TIMESTAMPTZ` for all timestamp columns
 - Convert to local time only at the presentation layer
 
-### Partitioning
-
-- **Range**: time-series or date-based data with known boundaries
-- **List**: columns with a known, finite set of values (e.g. region codes)
-- **Hash**: evenly distributing data when access patterns are unpredictable
-
 ## Review Mode
 
 Use this checklist when reviewing PostgreSQL code. Report each violation with: **file path**, **line number**, **rule violated**, and **the fix**.
 
 ### Naming Violations
 
-- Flag tables not using singular lowercase with underscores -- provide the correct name
-- Flag columns not using camelCase -- provide the correct name
-- Flag PKs not following `{tablename}Id` pattern -- provide the correct name
-- Flag FKs not matching the target PK name -- provide the correct name
-- Flag constraints/indexes not following `{prefix}_{table}_{field}` pattern -- provide the correct name
+- Flag tables not using singular lowercase with underscores — provide the correct name
+- Flag columns not using camelCase in source — provide the correct name
+- Flag PKs not following `{tablename}Id` pattern — provide the correct name
+- Flag FKs not matching the target PK name — provide the correct name
+- Flag constraint/index names that are not lowercase snake_case or do not follow `{prefix}_{table}_{field}` (e.g. uppercase embedded in the name, which Postgres silently folds) — provide the correct lowercase name
 
 ### Query Anti-Patterns
 
-- Flag `COUNT(*)` used for existence checks -- use `EXISTS (SELECT 1 ...)`
-- Flag `COUNT(*) > 1` for duplicate detection -- use `EXISTS` with a self-join
-- Flag nested subqueries -- rewrite as CTEs or JOINs
-- Flag loops, cursors, or row-by-row processing -- rewrite as set-based operations
-- Flag `SELECT *` -- list only required columns
-- Flag `IN` with correlated subqueries -- use `EXISTS`
+- Flag `COUNT(*)` used for existence checks — use `EXISTS (SELECT 1 ...)`
+- Flag `COUNT(*) > 1` for duplicate detection — use `EXISTS` with a self-join
+- Flag nested subqueries — rewrite as CTEs or JOINs
+- Flag loops, cursors, or row-by-row processing — rewrite as set-based operations
+- Flag `SELECT *` — list only required columns
+- Flag `IN` with correlated subqueries — use `EXISTS`
 
 ### Missing Indexes
 
@@ -113,14 +107,14 @@ Use this checklist when reviewing PostgreSQL code. Report each violation with: *
 
 ### Schema Issues
 
-- Flag PostgreSQL ENUM types -- replace with reference table using short PK
+- Flag PostgreSQL ENUM types — replace with reference table using short PK
 - Flag missing primary keys
 - Flag missing NOT NULL constraints where nullability is not justified
 - Flag denormalization without documented justification
 
 ### CASCADE Rules
 
-- **Any `ON DELETE CASCADE` is a violation** -- replace with explicit deletion in application code
+- **Team policy: any `ON DELETE CASCADE` is a violation** — replace with explicit deletion in application code
 
 ### UPSERT Usage
 
@@ -129,8 +123,8 @@ Use this checklist when reviewing PostgreSQL code. Report each violation with: *
 
 ### Style Violations
 
-- Flag lowercase SQL keywords -- rewrite in ALL CAPS
-- Flag trailing commas -- rewrite with leading commas
+- Flag lowercase SQL keywords — rewrite in ALL CAPS
+- Flag trailing commas — rewrite with leading commas
 - Flag missing semicolons at statement end
 - Flag missing carriage returns between clauses
 - Flag misaligned columns
@@ -139,29 +133,18 @@ Use this checklist when reviewing PostgreSQL code. Report each violation with: *
 
 | Anti-Pattern | Use Instead |
 |--------------|-------------|
-| `COUNT(*)` for existence | `EXISTS (SELECT 1 ...)` |
+| `COUNT(*)` for existence | `EXISTS (SELECT 1 ...)` — stops at first match |
 | `COUNT(*) > 1` for duplicates | `EXISTS` with self-join |
-| Subqueries | CTEs or JOINs |
+| Subqueries for complex logic | CTEs or JOINs — read top-to-bottom, easier to debug |
 | Loops / cursors in SQL | Set-based operations |
-| PostgreSQL `ENUM` type | Reference table with short PK |
+| PostgreSQL `ENUM` type | Reference table with short PK — full CRUD, metadata, CDC-safe |
 | `ON DELETE CASCADE` | Explicit deletion in application code |
-| `UPSERT` for non-migrations | Explicit `INSERT` or `UPDATE` |
+| `UPSERT` for non-migrations | Explicit `INSERT` or `UPDATE` (UPSERT fires `BEFORE INSERT` triggers that are not rolled back on the conflict path) |
 | `SELECT *` | List only required columns |
 | `IN` with correlated subquery | `EXISTS` |
-| Trailing commas | Leading commas |
+| Trailing commas | Leading commas — easier to comment out individual fields |
 | Lowercase SQL keywords | ALL CAPS keywords |
 | Missing semicolons | Always terminate with `;` |
+| Uppercase in constraint/index names | Lowercase snake_case (Postgres folds the uppercase silently) |
+| Waiting for slow queries to add indexes | Create indexes preemptively when query patterns are known |
 | `TIMESTAMP` without timezone | `TIMESTAMPTZ` (always UTC) |
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---------|-----|
-| Using `COUNT(*)` to check if rows exist | Use `EXISTS (SELECT 1 ...)` — stops at first match |
-| Creating PostgreSQL ENUM types | Use reference tables with short PK — full CRUD, metadata, CDC-safe |
-| Adding `ON DELETE CASCADE` to foreign keys | Handle deletions explicitly in application code |
-| Using UPSERT without reviewing trigger implications | `BEFORE INSERT` triggers fire and are not rolled back on conflict path |
-| Writing SQL keywords in lowercase | Always ALL CAPS: `SELECT`, `FROM`, `WHERE`, `JOIN` |
-| Using trailing commas in column lists | Use leading commas — easier to comment out individual fields |
-| Waiting for performance issues before creating indexes | Create indexes preemptively when query patterns are known |
-| Using subqueries for complex logic | Rewrite as CTEs — read top-to-bottom, easier to debug |

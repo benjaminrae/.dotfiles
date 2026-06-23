@@ -15,7 +15,8 @@
 - Never use spaces in identifiers.
 - Never use quotation marks around identifiers.
 - Never use PostgreSQL reserved words as identifiers.
-- Use camelCase for column names. PostgreSQL lowercases all unquoted identifiers automatically.
+- PostgreSQL folds all unquoted identifiers to lowercase. camelCase for columns and key fields is a **source-readability convention only** — never rely on case to distinguish two identifiers, and never quote to preserve case.
+- Multi-token object names (constraints, indexes) use lowercase snake_case so the stored, folded name stays readable.
 
 ### Database Names
 
@@ -31,8 +32,8 @@
 
 ### Column Names
 
-- Use **camelCase** (`createdAt`, `firstName`). PostgreSQL stores these as lowercase (`createdat`, `firstname`).
-- **Application/ORM**: camelCase mapping is natural since the names already match.
+- Use **camelCase** in source (`createdAt`, `firstName`); PostgreSQL stores these folded to lowercase (`createdat`, `firstname`). The camelCase is for source readability only.
+- **Application/ORM**: camelCase mapping is natural since the source names already match.
 - Use short, singular names that describe the value they hold.
 
 ### Primary Key Fields
@@ -49,12 +50,14 @@
 
 ## Constraint & Index Naming
 
+Constraint and index names are lowercase snake_case throughout. A camelCase field like `userId` becomes the `user_id` segment so the name reads correctly after PostgreSQL folds it.
+
 | Type | Pattern | Example |
 |------|---------|---------|
 | Primary Key | `pk_{tablename}_{field1}[_{field2}...]` | `pk_user_username` |
-| Foreign Key | `fk_{sourcetable}_{sourcefield}` | `fk_order_userId` |
+| Foreign Key | `fk_{sourcetable}_{sourcefield}` | `fk_order_user_id` |
 | Unique | `uq_{tablename}_{field1}[_{field2}...]` | `uq_object_name` |
-| Default Index (B-tree) | `idx_{tablename}_{field1}[_{field2}...]` | `idx_permission_objectId` |
+| Default Index (B-tree) | `idx_{tablename}_{field1}[_{field2}...]` | `idx_permission_object_id` |
 | GIN Index | `gin_{tablename}_{field1}[_{field2}...]` | `gin_document_tags` |
 | GiST Index | `gist_{tablename}_{field1}[_{field2}...]` | `gist_location_coordinates` |
 | BRIN Index | `brin_{tablename}_{field1}[_{field2}...]` | `brin_events_timestamp` |
@@ -220,20 +223,13 @@ A `BEFORE INSERT` trigger fires even when the row ends up taking the `ON CONFLIC
 
 ### Rule
 
-**Avoid UPSERT in application code** except during data migrations where the trade-off is acceptable and well-understood.
+**Team policy: avoid UPSERT in application code** except during data migrations where the trade-off is acceptable and well-understood — its trigger semantics (above) are surprising.
 
 ## Cascade Rules
 
-**NEVER use `ON DELETE CASCADE`.**
+**Team policy: NEVER use `ON DELETE CASCADE`.**
 
 Cascading deletes silently destroy data across related tables. Instead, handle deletions explicitly in application logic where the consequences are visible, testable, and auditable.
-
-## Partitioning
-
-- **Range partitioning**: for time-series or date-based data with known boundaries.
-- **List partitioning**: for columns with a known, finite set of values (e.g., region codes).
-- **Hash partitioning**: for evenly distributing data when access patterns are unpredictable.
-- Monitor partition sizes and query plans regularly; adjust boundaries or strategy as data grows.
 
 ## Timezone
 
@@ -244,32 +240,3 @@ Use `TIMESTAMPTZ` (timestamp with time zone) for all timestamp columns. Convert 
 ```sql
 createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
-
-## Security
-
-- Apply **least privilege**: grant only the permissions each role needs.
-- Use **strong passwords** and rotate them on a schedule.
-- Enforce **SSL/TLS** for all client connections.
-- Enable **encryption at rest** for the data directory and backups.
-- Maintain **audit logging** for DDL changes and privileged operations.
-- Perform **regular backups** and test restore procedures.
-
-## Performance Tuning
-
-### Query Optimization
-
-- Use `EXPLAIN ANALYZE` to understand query plans before and after changes.
-- Avoid `SELECT *`; list only the columns you need.
-- Ensure JOINs operate on indexed columns.
-- Prefer `EXISTS` over `IN` for correlated subqueries.
-
-### Configuration Parameters
-
-- **`shared_buffers`**: start at 25% of available RAM; tune based on `pg_stat_bgwriter` hit ratios.
-- **`work_mem`**: increase for complex sorts and hash joins; be cautious as it is per-operation.
-- **`checkpoint_segments`** (or `max_wal_size` in modern PostgreSQL): increase to reduce checkpoint frequency for write-heavy workloads.
-
-### Monitoring
-
-- **`pg_stat_activity`**: identify long-running queries, idle-in-transaction connections, and lock contention.
-- **`pg_stat_statements`**: find the most expensive queries by total time, calls, and rows returned.

@@ -23,6 +23,9 @@
       "Bash(make *)"
     ]
   },
+  "enabledMcpjsonServers": [
+    "mcp-atlassian"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -31,6 +34,17 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/pre-tool-use-bash.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '\"\\(.title // \"Claude Code\")\\n\\(.body // \"Needs your attention\")\"' | { read -r title; read -r body; osascript -e \"display notification \\\"$body\\\" with title \\\"$title\\\" sound name \\\"Funk\\\"\"; }",
+            "timeout": 5
           }
         ]
       }
@@ -43,9 +57,16 @@
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "atlassian@claude-plugins-official": true,
     "playwright@claude-plugins-official": true
   },
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
+  "theme": "dark-daltonized",
+  "preferredNotifChannel": "terminal_bell",
+  "voiceEnabled": true,
+  "skipAutoPermissionPrompt": true
 }

@@ -7,10 +7,12 @@ description: Use when creating Jira issues with full context - auto-detects proj
 
 Create Jira issues (Task, Story, Bug, Subtask) with intelligent defaults, validation, and context-aware descriptions.
 
+**Prerequisite:** the `mcp-atlassian` MCP server must be connected. It uses a pre-configured Atlassian site, so no cloud ID lookup is needed. If a tool call fails with a connection/auth error, tell the user to run `/mcp` to re-authenticate.
+
 ## Workflow
 
 ```
-1. INITIALIZE  →  Get cloud ID, detect repo → project key, detect branch ticket
+1. INITIALIZE  →  Detect repo → project key, detect branch ticket
 2. GATHER INFO →  Validate issue type, ask for parent, offer branch linking
 3. BUILD DESC  →  Collect context (git, conversation, code), ask format preference
 4. PREVIEW     →  Show all fields, allow edits
@@ -19,17 +21,10 @@ Create Jira issues (Task, Story, Bug, Subtask) with intelligent defaults, valida
 
 ## Step 1: Initialize
 
-### Get Cloud ID
-
-```
-getAccessibleAtlassianResources()
-→ Extract cloudId; construct base URL from the resource's url field
-```
-
 ### Detect Repository
 
 1. Try `git remote get-url origin` → parse repo name; fallback to directory name
-2. Call `getVisibleJiraProjects` → if repo matches a project name/key, use it; otherwise ask
+2. Call `mcp__mcp-atlassian__jira_get_all_projects` → if repo matches a project name/key, use it; otherwise ask
 
 ### Detect Branch Ticket
 
@@ -42,11 +37,9 @@ Parse `git branch --show-current` for ticket patterns:
 
 ### Validate Issue Type
 
-Always validate before creating: `getJiraProjectIssueTypesMetadata(cloudId, projectKey)`.
+`mcp-atlassian` has no issue-type metadata tool, so confirm the type against the standard set (Task, Story, Bug, Subtask, Epic) before creating. **Type matching:** case-insensitive, partial match OK (e.g., "task" matches "Task"). If `jira_create_issue` later rejects the type as unavailable for the project, relay the error's list of valid types and ask which to use.
 
-If requested type unavailable, list the available types for the project and ask which to use. **Type matching:** case-insensitive, partial match OK (e.g., "task" matches "Task").
-
-**Subtask rules:** Require a parent Task or Story (not Epic). The `parent` field works for both Epic→Task/Story and Task/Story→Subtask hierarchies. If user requests Subtask without parent, prompt: "Subtasks need a parent Task or Story. Which issue should this be under?"
+**Subtask rules:** Require a parent Task or Story (not Epic). Pass the parent via `additional_fields` (`{"parent": "PROJ-123"}`); the `parent` field works for both Epic→Task/Story and Task/Story→Subtask hierarchies. If user requests Subtask without parent, prompt: "Subtasks need a parent Task or Story. Which issue should this be under?"
 
 **Bug issues:** Use the description template from `bug-template.md`.
 
@@ -66,7 +59,7 @@ With branch ticket detected, offer these options:
 
 Without branch ticket, offer: (1) enter ID directly, (2) search, (3) no parent.
 
-If search selected, use `searchJiraIssuesUsingJql` with project/type/status filters and present numbered results for selection.
+If search selected, use `mcp__mcp-atlassian__jira_search` with project/type/status filters and present numbered results for selection.
 
 ### Offer Branch Linking
 
@@ -101,49 +94,36 @@ Ask: "How detailed should the description be?"
 
 ## Step 4: Preview & Confirm
 
-**Always show preview before creating:**
+**Always show a preview before creating.** Format it however reads cleanly in the user's terminal, but include every field that will be sent: project key, type, summary, parent (with its summary, if any), link (type + target, if any), and the full description.
 
-```
-┌─────────────────────────────────────────────────────┐
-│ Preview: New Task in {projectKey}                   │
-├─────────────────────────────────────────────────────┤
-│ Type:        Task                                   │
-│ Summary:     [summary]                              │
-│ Parent:      {PROJ-316} [parent summary]            │
-│ Link:        Relates to {BRANCH-TICKET}             │
-├─────────────────────────────────────────────────────┤
-│ Description:                                        │
-│ [description content]                               │
-└─────────────────────────────────────────────────────┘
-
-Ready to create? (1) Yes (2) Edit summary (3) Edit description (4) Change parent (5) Cancel
-```
-
-Loop on edits until user confirms or cancels.
+Then ask the user to confirm or edit, offering at least: create as-is, edit summary, edit description, change parent, cancel. Loop on edits until the user confirms or cancels.
 
 ## Step 5: Create
 
 ### Create Issue
 
 ```
-createJiraIssue(cloudId, projectKey, issueTypeName, summary, description, parent)
+mcp__mcp-atlassian__jira_create_issue(
+  project_key, summary, issue_type, description,
+  additional_fields  # parent/epic link, e.g. {"parent": "PROJ-123"} or {"epic_link": "EPIC-123"}
+)
 ```
 
-Description supports markdown formatting.
+Description supports markdown formatting. The returned issue object includes the issue key and its URL — use those when showing the result.
 
 ### Add Issue Link (if requested)
 
-Jira issue linking requires a separate API call after creation. Check for link-related MCP tools first; try `editJiraIssue` via the update field as an alternative; if no tool available, tell user: "Created the task. To link it to {BRANCH-TICKET}, add the link manually in Jira." Supported link types: "blocks", "is blocked by", "relates to".
+Jira issue linking is a separate call after creation: `mcp__mcp-atlassian__jira_create_issue_link(link_type, inward_issue_key, outward_issue_key)`. Map the chosen relationship to `link_type` ("Blocks", "Relates to", etc.) and set the inward/outward keys accordingly (the new issue and `{BRANCH-TICKET}`). Only if that call fails, fall back to telling the user: "Created the task. To link it to {BRANCH-TICKET}, add the link manually in Jira."
 
 ### Show Result
 
 ```
 Created {projectKey}-NNN: [summary]
-   {baseUrl}/browse/{projectKey}-NNN
+   {issueUrl}
    └── Relates to {BRANCH-TICKET}
 ```
 
-Construct `baseUrl` from `getAccessibleAtlassianResources` response.
+Use the issue key and URL returned by `jira_create_issue`.
 
 ## Reference
 
@@ -153,10 +133,10 @@ See `mcp-reference.md` for MCP tool reference, optional fields, and error handli
 
 | Mistake | Fix |
 |---------|-----|
-| Skipping type validation | Always call `getJiraProjectIssueTypesMetadata` first |
+| Skipping type validation | Confirm the type against the standard set before creating |
 | Skipping parent prompt | Always ask - even if user didn't mention one |
-| No preview | Always show preview before `createJiraIssue` |
+| No preview | Always show preview before `mcp__mcp-atlassian__jira_create_issue` |
 | Generic description | Use git/conversation context to enrich |
 | Ignoring branch context | Check branch for ticket ID, offer linking |
-| Hardcoding Jira URLs | Always construct URL from `getAccessibleAtlassianResources` response |
-| Assuming project key | Always discover via `getVisibleJiraProjects` when not obvious from context |
+| Hardcoding Jira URLs | Use the issue URL returned by `jira_create_issue` |
+| Assuming project key | Always discover via `mcp__mcp-atlassian__jira_get_all_projects` when not obvious from context |

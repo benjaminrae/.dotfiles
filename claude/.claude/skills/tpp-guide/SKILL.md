@@ -1,6 +1,6 @@
 ---
 name: tpp-guide
-description: "Use when teaching or applying the Transformation Priority Premise (TPP) during TDD. Guides choosing the simplest transformation at each RED-GREEN step to evolve code from specific to general."
+description: "Use when teaching or applying the Transformation Priority Premise (TPP) during TDD: choosing the simplest code transformation at a RED->GREEN step to evolve code from specific to general. Not for overall kata flow, ZOMBIES test ordering, baby steps, triangulation, or commit discipline (use tdd-kata-coach)."
 ---
 
 # Transformation Priority Premise (TPP) Guide
@@ -28,6 +28,8 @@ The Transformation Priority Premise helps you choose the simplest code change at
 | 13 | `variable -> mutation` | Change state of an existing variable |
 | 14 | `switch/case` | Split flow further with multiple branches |
 
+The high-value discipline is at the top of the list: prefer constant, scalar, and conditional transformations over loops and recursion early. The ordering of the lower-priority transformations (9-14) is heuristic and contested in the literature — treat it as rough guidance, not a strict algorithm.
+
 ## How to Apply
 
 At each GREEN step:
@@ -38,6 +40,13 @@ At each GREEN step:
 4. **When multiple transformations could work:** Always pick the highest-priority one. If two transformations have the same priority, prefer the one that introduces less duplication. If still tied, either choice is fine — the next test will course-correct.
 5. If a transformation doesn't directly change behavior, it may enable the next one (e.g., `constant -> scalar` enables state changes)
 6. Avoid introducing duplication -- but duplication as a stopgap can reveal patterns for generalization
+
+## Scope
+
+TPP guides the **GREEN step only** — it chooses how to make a failing test pass. It does not apply to the other phases of the cycle:
+
+- **RED** (which test to write next) is driven by triangulation, not TPP.
+- **REFACTOR** (cleanup once green) is driven by refactoring discipline, not TPP — refactoring preserves behavior, so there is no "transformation to pass a test" to prioritize.
 
 ## Key Principles
 

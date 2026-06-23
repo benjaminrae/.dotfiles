@@ -1,6 +1,6 @@
 ---
 name: characterization-testing
-description: "Use when approaching untested legacy code that needs a safety net before refactoring. Guides the 5-step characterization testing process to discover and lock down existing behavior."
+description: "Guides the 5-step characterization testing process to discover and lock down the existing behavior of untested legacy code. Use when approaching untested legacy code that needs a safety net before refactoring. Not for: writing tests for new code (use TDD) or refactoring code that already has tests (use refactoring-guide)."
 ---
 
 # Characterization Testing
@@ -9,9 +9,7 @@ description: "Use when approaching untested legacy code that needs a safety net 
 
 When you need to change legacy code that has no tests, no documentation, and the original author is gone -- you need a safety net. Characterization tests capture what the code **actually does** (not what it's supposed to do), preserving current behavior before you make changes.
 
-<HARD-GATE>
-Do NOT attempt to refactor or change legacy code until you have a sufficient characterization test suite covering the code paths you intend to modify. The safety net comes FIRST.
-</HARD-GATE>
+**Do not refactor or change legacy code until you have a sufficient characterization test suite covering the code paths you intend to modify. The safety net comes first.**
 
 ## The Mindset
 
@@ -84,6 +82,12 @@ This is critical. Testing shallow-to-deep builds your understanding gradually. R
 - Fixing bugs discovered during characterization testing — capture the current behavior, bugs and all
 - Using generic test names — give tests meaningful names that describe the behavior you discovered
 - Starting refactoring before the safety net is complete
+
+## When the Code Resists Testing
+
+If Step 2 or 3 can't produce a stable `Received:` value, the code has a hidden dependency you must break before you can characterize it. Common causes: clocks, randomness, global or static state, network/database calls, and hard-to-reach seams.
+
+Introduce a seam to make the dependency injectable or overridable, then resume the 5-step loop. For dependency-breaking techniques (Sprout, Extract and Override, parameterizing constructors), use the `legacy-code-expert` agent.
 
 ## When is the Safety Net Sufficient?
 

@@ -9,9 +9,7 @@ description: "Use when implementing a vertical slice or feature end-to-end using
 
 Guide implementation using the outside-in (London school) approach with a double loop: an outer acceptance test loop drives the feature, and an inner classical TDD loop builds each component. Use this when implementing vertical slices or features where the entry point and expected output are known.
 
-<HARD-GATE>
-The outer acceptance test MUST be written first and MUST fail before starting any inner loop work. Do NOT skip the outer loop.
-</HARD-GATE>
+**Gate (do not skip):** the outer loop has not started until you have run the acceptance test and observed it fail for the right reason. Proceed to the inner loop only when you can point to that recorded run output — the failure message and the failing assertion. No recorded failing run means no outer loop, regardless of schedule pressure. Write the acceptance test first; do not write inner-loop production code before this artifact exists.
 
 ## When to Use
 
@@ -61,8 +59,8 @@ OUTER LOOP (Acceptance Test)
 2. Write the assertion on that side effect (this is your `then`/`assert`)
 3. Identify what **triggers** the side effect (this is your `when`/`act`)
 4. Set up the necessary context (this is your `given`/`arrange`)
-5. Run the test -- it MUST fail
-6. The failure message is your guide: it tells you which collaborator or component to build next
+5. Run the test and record the output -- it must fail for the **right reason**: missing or incorrect behavior in a collaborator the feature needs. Compilation errors, reference errors, and typos are wrong-reason failures -- fix the wiring and re-run until the failure is behavioral.
+6. The recorded failure message is your guide and the artifact the gate requires: it tells you which collaborator or component to build next
 
 ### Step 2: Enter the inner loop
 
@@ -80,7 +78,7 @@ Use classical TDD (RED-GREEN-REFACTOR) to build the component that the acceptanc
 After completing each component in the inner loop:
 
 1. Run the acceptance test
-2. If it **still fails**: read the failure message -- it points to the next component to build
+2. If it **still fails**: confirm the failure message has moved on to the *next* missing component. If the same component is still failing after its inner cycle finished green, the inner cycle did not deliver what the acceptance test needs -- go back to the inner loop for that component rather than building something new.
 3. If it **passes**: exit the inner loop, commit the acceptance test
 
 ### Step 4: Commit and refactor
@@ -92,6 +90,12 @@ After completing each component in the inner loop:
 ### Step 5: Next acceptance test
 
 Write the next acceptance test for the next slice of behavior. Repeat the entire double loop.
+
+## When Things Go Wrong
+
+- **The acceptance test passes immediately.** The gate is violated -- there is no failing run to record. Either the behavior already exists (pick a slice that does not yet work) or the test asserts nothing meaningful (strengthen the assertion on the side effect until it fails). Do not enter the inner loop on a green acceptance test.
+- **The acceptance test fails for the wrong reason.** A compile error, reference error, typo, or broken wiring is not a behavioral failure. Fix the wiring and re-run until the failure names a missing or incorrect collaborator behavior. Only that failure is a valid gate artifact.
+- **The inner loop never turns the acceptance test green.** Each inner cycle should make the acceptance test failure move on to the next missing component. If it does not move after a component goes green, you built the wrong thing or asserted the wrong behavior in the unit test -- re-read the acceptance failure message and let it, not a guess, choose the next unit test. If the acceptance test is unreachable from the entry point, the slice is too large; split it.
 
 ## Testing Direction
 

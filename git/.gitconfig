@@ -30,8 +30,18 @@
 	defaultBranch = main
 
 [user]
+	email = benjamin.rae@qualifyze.com
 	name = Benjamin Rae
-	email = benjaminrae93@gmail.com
+
+[includeIf "hasconfig:remote.*.url:https://github.com/benjaminrae/**"]
+	path = .gitconfig.personal
+
+[includeIf "hasconfig:remote.*.url:git@github.com:benjaminrae/**"]
+	path = .gitconfig.personal
+
+[includeIf "hasconfig:remote.*.url:git@github-personal:benjaminrae/**"]
+	path = .gitconfig.personal
+
 
 [pull]
 	ff = only

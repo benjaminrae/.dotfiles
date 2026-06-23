@@ -1,6 +1,6 @@
 ---
 name: qa-pr-comment
-description: Use when posting a manual QA summary comment on a GitHub PR after executing manual tests. Formats test results as a human-written PR comment with a scenario table and known issues section.
+description: Use when posting a manual QA summary comment on a GitHub PR after executing manual tests. Formats results as a concise, plainly written PR comment with a scenario table and known issues section — for posting results after tests have run, not for generating a test plan or report.
 ---
 
 # QA PR Comment
@@ -11,6 +11,10 @@ Post a manual QA summary on a PR after executing tests from a QA review report.
 
 - After running manual QA tests against a live system
 - When the user asks to comment QA results on a PR
+
+## Report Only What Was Tested
+
+Populate the tables only from tests that were actually executed in this session. Never invent PASS rows or fabricate results to fill the template. If no tests have been run yet, stop — run them first (or hand off to `qa-report` to plan them) before posting. Every row must trace to an observed result.
 
 ## Template
 
@@ -39,7 +43,7 @@ Tested against a running local instance with [relevant infrastructure context].
 
 ## Guidelines
 
-- Write in third person, factual tone — no "I tested" or "we verified"
+- Write plainly and factually in the third person: state what was tested and the result, e.g. "Scenario X passed" rather than "I tested X"
 - Omit the **Failed** section entirely if all tests passed
 - Omit the **Known Issues** section if there are none
 - Keep scenario descriptions concise: `action → expected result`

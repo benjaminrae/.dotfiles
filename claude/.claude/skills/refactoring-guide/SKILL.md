@@ -10,7 +10,7 @@ description: "Use when refactoring code after reaching green in TDD, or when imp
 Refactoring improves code structure without changing external behavior. This skill enforces a disciplined approach: only refactor in green, make small changes, run tests frequently, and revert if anything breaks.
 
 <HARD-GATE>
-NEVER refactor when tests are RED. Get to green first, then refactor. If a refactoring breaks tests, REVERT immediately and try smaller steps.
+NEVER refactor when tests are RED. Before refactoring, run the project's test command and observe every test pass — green confirmed by output, not by assumption. Only then refactor. If a refactoring breaks tests, REVERT immediately and try smaller steps.
 </HARD-GATE>
 
 ## Core Rules
@@ -85,18 +85,9 @@ if (user.age >= 18 && user.purchaseHistory.length > 0 &&
 }
 ```
 
-## Refactoring Checklist
+## The Gate After Every Change
 
-After each refactoring session, verify:
-
-- [ ] All tests are passing
-- [ ] No new functionality added
-- [ ] External behavior unchanged
-- [ ] Code is more readable
-- [ ] Names are descriptive
-- [ ] Methods have single responsibilities
-- [ ] No comments needed to explain code
-- [ ] Tests still pass after refactoring
+Run the project's test command. If every test passes, the refactoring holds — commit it. If any test is red, revert to the last green state and take a smaller step. This is the only check that matters; it is observed in the test output, not self-assessed.
 
 ## When to Stop
 

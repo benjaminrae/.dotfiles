@@ -2,6 +2,8 @@
 
 You receive `{branch}` (branch name) and `{tmp}` (temp directory path) from the orchestrator.
 
+**Return your findings as text output.** Do NOT write the findings file — the orchestrator writes it. (Redirecting verbose tool output to log files under `{tmp}/` in step 2 is expected and is not the findings file.)
+
 ## 1. Discover Repo Tooling
 
 Read whichever of these files exist in the repo root:
@@ -42,9 +44,9 @@ Keep only the exit code and a one-line summary in the conversation. Run independ
 - Each surviving mutant: file, line, mutator type, description
 - Flag any file below 90%
 
-## 4. Write Output
+## 4. Return Output
 
-Write `{tmp}/automated-checks.md`:
+Return your findings as text in this format (the orchestrator writes them to `{tmp}/automated-checks.md`):
 
 ```
 ## Automated Checks
